@@ -1,0 +1,161 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;0,9..40,800;0,9..40,900&family=Playfair+Display:wght@600;700&display=swap');
+
+:root {
+  --color-primary: #ff6b9d;
+  --color-primary-light: #ffb3d1;
+  --color-primary-dark: #e84a7f;
+  --color-rose: #ff8fab;
+  --color-blush: #fff0f5;
+  --color-cream: #fff5f8;
+  --color-lavender: #f3e8ff;
+  --color-cocoa: #5c3d4e;
+  --color-sage: #b8e0c8;
+  --color-taupe: #9b7b8e;
+  --color-sky: #d4b8ff;
+  --color-surface: #ffffff;
+
+  --gradient-page: linear-gradient(135deg, #fff0f5 0%, #fff5f8 40%, #fce7f3 100%);
+  --gradient-primary: linear-gradient(135deg, #ff6b9d 0%, #ff8fab 50%, #ffb3d1 100%);
+  --gradient-card: linear-gradient(145deg, #ffffff 0%, #fff8fb 100%);
+
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --space-xxl: 36px;
+
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-full: 9999px;
+
+  --shadow-card: 0 2px 12px rgba(255, 107, 157, 0.08);
+  --shadow-elevated: 0 8px 32px rgba(255, 107, 157, 0.15);
+  --shadow-glow: 0 0 40px rgba(255, 107, 157, 0.25);
+
+  --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Playfair Display', Georgia, serif;
+
+  --sidebar-width: 260px;
+  --bottom-nav-height: 72px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--gradient-page);
+  background-attachment: fixed;
+  color: var(--color-cocoa);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--color-primary-dark); text-decoration: none; }
+button { font-family: inherit; }
+
+.authScaffold {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl);
+  position: relative;
+  overflow: hidden;
+}
+
+.authScaffold::before {
+  content: '';
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(255, 107, 157, 0.2) 0%, transparent 70%);
+  top: -100px;
+  right: -100px;
+  pointer-events: none;
+}
+
+.authCard {
+  width: 100%;
+  max-width: 420px;
+  background: var(--gradient-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xxl);
+  box-shadow: var(--shadow-elevated);
+  border: 1px solid rgba(255, 107, 157, 0.12);
+  position: relative;
+  z-index: 1;
+}
+
+.formStack { display: flex; flex-direction: column; gap: var(--space-md); }
+
+.textButton {
+  background: none;
+  border: none;
+  color: var(--color-primary-dark);
+  font-weight: 700;
+  cursor: pointer;
+  padding: var(--space-sm);
+  font-size: 0.9rem;
+}
+
+.textButton:hover { opacity: 0.75; }
+
+.onboardingPage {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl);
+  text-align: center;
+}
+
+.onboardingIcon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto var(--space-xl);
+  background: var(--gradient-primary);
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: var(--shadow-glow);
+}
+
+.onboardingTitle {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-cocoa);
+  margin: 0 0 var(--space-md);
+}
+
+.onboardingBody {
+  color: var(--color-taupe);
+  font-size: 1.125rem;
+  line-height: 1.7;
+  margin: 0 0 var(--space-xxl);
+}
+
+.dots { display: flex; gap: var(--space-sm); justify-content: center; margin-bottom: var(--space-xl); }
+.dot { width: 10px; height: 10px; border-radius: var(--radius-full); background: var(--color-primary-light); transition: all 0.3s; }
+.dotActive { width: 28px; background: var(--gradient-primary); }
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 107, 157, 0.4); }
+  50% { box-shadow: 0 0 0 20px rgba(255, 107, 157, 0); }
+}

@@ -1,0 +1,44 @@
+.bottomNav {
+  display: flex;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--bottom-nav-height);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(255, 107, 157, 0.15);
+  overflow-x: auto;
+  z-index: 100;
+  padding: 0 var(--space-xs);
+}
+
+@media (min-width: 1024px) {
+  .bottomNav {
+    display: none;
+  }
+}
+
+.tab {
+  flex: 1;
+  min-width: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: var(--space-sm) 4px;
+  color: var(--color-taupe);
+  font-size: 0.65rem;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+
+.tab:hover,
+.active {
+  color: var(--color-primary-dark);
+}
+
+.active svg {
+  color: var(--color-primary);
+}

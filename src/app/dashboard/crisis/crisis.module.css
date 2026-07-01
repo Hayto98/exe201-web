@@ -1,0 +1,6 @@
+.contactRow { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.contactActions { display: flex; gap: 8px; align-items: center; }
+.callBtn { width: 36px; height: 36px; background: var(--gradient-primary); color: white; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; }
+.iconBtn { width: 36px; height: 36px; border: none; background: rgba(255, 107, 157, 0.1); border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.meta { font-size: 0.75rem; color: var(--color-taupe); }
+.mapLink { color: var(--color-primary-dark); font-weight: 700; }

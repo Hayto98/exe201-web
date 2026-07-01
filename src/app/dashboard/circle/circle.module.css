@@ -1,0 +1,8 @@
+.actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.sectionTitle { font-weight: 800; color: var(--color-cocoa); margin: 8px 0 0; font-size: 1rem; }
+.memberRow { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.memberInfo { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 120px; }
+.memberInfo span { font-size: 0.85rem; color: var(--color-taupe); }
+.badge { background: rgba(255, 107, 157, 0.15); color: var(--color-primary-dark); padding: 4px 10px; border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 700; }
+.rowActions { display: flex; gap: 8px; }
+.iconBtn { width: 36px; height: 36px; border-radius: var(--radius-sm); border: 2px solid var(--color-primary-light); background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--color-primary-dark); }

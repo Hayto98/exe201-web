@@ -1,0 +1,6 @@
+.chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip { padding: 8px 16px; border-radius: var(--radius-full); border: 2px solid rgba(255, 107, 157, 0.25); background: white; cursor: pointer; font-weight: 700; color: var(--color-taupe); transition: all 0.2s; }
+.chipActive { background: rgba(255, 107, 157, 0.15); border-color: var(--color-primary); color: var(--color-primary-dark); }
+.toggleRow { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; font-weight: 600; }
+.rhythmRow { display: flex; align-items: center; gap: 12px; }
+.iconBtn { width: 36px; height: 36px; border: none; background: rgba(255, 107, 157, 0.1); border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--color-primary-dark); }

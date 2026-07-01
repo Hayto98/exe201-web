@@ -1,0 +1,11 @@
+.block {
+  background: var(--gradient-card);
+  border-radius: var(--radius-md);
+  padding: 18px;
+  box-shadow: var(--shadow-card);
+  border: 1px solid rgba(255, 107, 157, 0.08);
+}
+
+.bordered {
+  border: 1.5px solid rgba(255, 107, 157, 0.2);
+}
