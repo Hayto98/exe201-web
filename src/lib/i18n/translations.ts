@@ -17,6 +17,8 @@ export const translations = {
   crisis: { en: 'Crisis', vi: 'Khẩn cấp' },
   plans: { en: 'Plans', vi: 'Gói dịch vụ' },
   profile: { en: 'Profile', vi: 'Hồ sơ' },
+  nav_more: { en: 'More', vi: 'Thêm' },
+  nav_plans_short: { en: 'Plans', vi: 'Gói' },
   im_safe: { en: "I'm Safe", vi: 'Tôi an toàn' },
   circle_notified: { en: 'Your circle has been notified.', vi: 'Vòng thân của bạn đã được thông báo.' },
   add_friend: { en: 'Add Friend', vi: 'Thêm bạn' },

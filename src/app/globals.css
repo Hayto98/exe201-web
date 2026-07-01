@@ -38,7 +38,7 @@
   --font-display: 'Playfair Display', Georgia, serif;
 
   --sidebar-width: 260px;
-  --bottom-nav-height: 72px;
+  --bottom-nav-height: 64px;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
