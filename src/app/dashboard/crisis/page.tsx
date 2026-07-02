@@ -204,30 +204,7 @@ export default function CrisisPage() {
               </button>
 
               <div className={styles.contactTools}>
-                <button
-                  type="button"
-                  className={styles.toolBtn}
-                  onClick={async () => {
-                    await toggleEmergencyVerified(user.id, c.id, c.is_verified);
-                    await refresh();
-                  }}
-                >
-                  {c.is_verified ? '✓' : '○'}{' '}
-                  {tInline(lang, 'Verified', 'Xác minh')}
-                </button>
-                <button
-                  type="button"
-                  className={styles.toolBtn}
-                  onClick={async () => {
-                    await toggleEmergencyAutoNotify(user.id, c.id, c.auto_notify);
-                    await refresh();
-                  }}
-                >
-                  <Bell size={14} />
-                  {c.auto_notify
-                    ? tInline(lang, 'Auto on', 'Tự báo bật')
-                    : tInline(lang, 'Auto off', 'Tự báo tắt')}
-                </button>
+
                 <button
                   type="button"
                   className={styles.toolBtnDanger}
