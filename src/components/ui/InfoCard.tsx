@@ -4,15 +4,19 @@ interface InfoCardProps {
   icon: React.ReactNode;
   title: string;
   body: string;
+  timestamp?: string;
 }
 
-export function InfoCard({ icon, title, body }: InfoCardProps) {
+export function InfoCard({ icon, title, body, timestamp }: InfoCardProps) {
   return (
     <div className={styles.card}>
       <div className={styles.iconWrapper}>{icon}</div>
       <div className={styles.content}>
         <h4 className={styles.title}>{title}</h4>
         <p className={styles.body}>{body}</p>
+        {timestamp && (
+          <span className={styles.timestamp}>{timestamp}</span>
+        )}
       </div>
     </div>
   );

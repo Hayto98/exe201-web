@@ -6,6 +6,8 @@ export interface Profile {
   avatar_url?: string | null;
   is_premium: boolean;
   last_safe_at?: string | null;
+  /** Mã CK SePay cố định: ESM + 6 số */
+  sepay_reference_code?: string | null;
 }
 
 export type CircleStatus = 'pending' | 'accepted' | 'declined';
@@ -180,6 +182,26 @@ export interface Entitlement {
   updated_at: string;
 }
 
+export type AlertJobStatus = 'scheduled' | 'sent' | 'cancelled' | 'failed';
+
+export interface AlertJob {
+  id: string;
+  incident_id: string;
+  user_id: string;
+  run_at: string;
+  status: AlertJobStatus;
+  created_at: string;
+}
+
+export interface AuditLog {
+  id: string;
+  user_id: string;
+  actor_user_id?: string | null;
+  action: string;
+  metadata?: string | null;
+  created_at: string;
+}
+
 export interface EsmeryState {
   profile: Profile;
   circleMembers: CircleMember[];
@@ -194,9 +216,11 @@ export interface EsmeryState {
   subscriptionStatus: SubscriptionStatus;
   notificationDeliveries: NotificationDelivery[];
   alertIncidents: AlertIncident[];
+  alertJobs: AlertJob[];
   locationShares: LocationShare[];
   paymentOrders: PaymentOrder[];
   entitlement: Entitlement;
+  auditLogs: AuditLog[];
 }
 
 export interface DemoUser {

@@ -3,6 +3,7 @@
 import * as memory from './memoryRepository';
 import {
   createPaymentOrderSupabase,
+  ensureUserSepayReferenceCode,
   updateSubscriptionSupabase,
 } from './supabaseRepository';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
@@ -22,5 +23,13 @@ export async function choosePlan(userId: string, plan: SubscriptionPlan): Promis
     return null;
   }
   memory.createPaymentOrder(userId, plan);
-  return memory.refreshState(userId).paymentOrders[0] ?? null;
+  return memory.refreshState(userId).paymentOrders.find((o) => o.status === 'pending') ?? null;
+}
+
+/** Lấy hoặc tạo mã CK cố định ESM###### của user */
+export async function getUserSepayReferenceCode(userId: string): Promise<string> {
+  if (isSupabaseConfigured()) {
+    return ensureUserSepayReferenceCode(userId);
+  }
+  return memory.ensureUserSepayReferenceCode(userId);
 }

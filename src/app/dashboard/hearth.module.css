@@ -1,3 +1,105 @@
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.greetingPrefix {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-taupe);
+  letter-spacing: 0.02em;
+}
+
+.greetingName {
+  display: block;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  line-height: 1.2;
+}
+
+.checkInBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: var(--space-sm);
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 107, 157, 0.1);
+  border: 1px solid rgba(255, 107, 157, 0.18);
+  color: var(--color-cocoa);
+  font-size: 0.875rem;
+  font-weight: 600;
+  max-width: 100%;
+  line-height: 1.35;
+}
+
+.checkInBadge svg {
+  flex-shrink: 0;
+  color: var(--color-primary);
+}
+
+.toolbarActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+}
+
+.iconAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 40px;
+  min-width: 40px;
+  padding: 0 12px;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--color-primary-light);
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--color-primary-dark);
+  font-weight: 700;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.iconAction:hover {
+  background: rgba(255, 107, 157, 0.08);
+}
+
+.iconAction:active {
+  transform: scale(0.96);
+}
+
+.iconActionLabel {
+  display: none;
+}
+
+@media (min-width: 480px) {
+  .iconActionLabel {
+    display: inline;
+  }
+}
+
+.safeSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-sm) 0 var(--space-md);
+  margin: var(--space-xs) 0 var(--space-sm);
+}
+
+.sectionTitle {
+  font-weight: 800;
+  margin: var(--space-md) 0 0;
+  color: var(--color-cocoa);
+  font-size: 1rem;
+}
+
 .toastWrap {
   animation: toastIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
 }

@@ -8,12 +8,12 @@ import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { useAuth, useEsmeryState } from '@/contexts/AppProviders';
 import { useLanguage } from '@/lib/i18n/useLanguage';
 import { tInline } from '@/lib/i18n/translations';
-import * as memory from '@/lib/repository/memoryRepository';
+import { addFriend } from '@/lib/repository/circle';
 
 export default function CircleSetupPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const { refresh } = useEsmeryState();
+  const { state, refresh } = useEsmeryState();
   const { lang } = useLanguage();
   const [contact, setContact] = useState('');
   const [name, setName] = useState('');
@@ -21,8 +21,12 @@ export default function CircleSetupPage() {
 
   const addContact = async () => {
     if (user && contact) {
-      memory.addFriend(user.id, contact, name, relationship);
-      await refresh();
+      try {
+        await addFriend(user.id, contact, name, relationship, state ?? undefined);
+        await refresh();
+      } catch {
+        // Continue onboarding even if add fails
+      }
     }
     router.push('/onboarding/rhythm-setup');
   };

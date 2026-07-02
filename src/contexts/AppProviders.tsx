@@ -5,7 +5,9 @@ import type { EsmeryState } from '@/lib/repository/types';
 import * as memory from '@/lib/repository/memoryRepository';
 import { loadUserStateFromSupabase, upsertPaymentOrderToSupabase } from '@/lib/repository/supabaseRepository';
 import { getSupabaseClient, isSupabaseConfigured } from '@/lib/supabase/client';
+import { mapAuthErrorMessage } from '@/lib/auth/errors';
 import { LanguageProvider } from '@/lib/i18n/useLanguage';
+import { useAutoRefresh } from '@/lib/hooks/useAutoRefresh';
 
 export interface AuthUser {
   id: string;
@@ -24,6 +26,7 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 const DEMO_SESSION_KEY = 'esmery-demo-session';
+const SUPABASE_PROJECT_KEY = 'esmery-supabase-project';
 
 function loadDemoSession(): AuthUser | null {
   if (typeof window === 'undefined') return null;
@@ -40,44 +43,90 @@ function saveDemoSession(user: AuthUser | null) {
   else localStorage.removeItem(DEMO_SESSION_KEY);
 }
 
+/**
+ * Detect if Supabase project has changed (e.g. new env).
+ * If so, clear all old sessions so user must re-authenticate.
+ */
+function detectProjectChange(): boolean {
+  if (typeof window === 'undefined') return false;
+  const currentUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
+  const savedUrl = localStorage.getItem(SUPABASE_PROJECT_KEY);
+
+  if (currentUrl && savedUrl && savedUrl !== currentUrl) {
+    // Project changed! Clear everything
+    console.log('[auth] Supabase project changed, clearing old sessions...');
+    localStorage.removeItem(DEMO_SESSION_KEY);
+    localStorage.removeItem(SUPABASE_PROJECT_KEY);
+    // Clear all supabase-related storage items
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith('sb-') || key.includes('supabase')) {
+        localStorage.removeItem(key);
+      }
+    });
+    // Save new project URL
+    localStorage.setItem(SUPABASE_PROJECT_KEY, currentUrl);
+    return true;
+  }
+
+  // Save current project URL if not saved yet
+  if (currentUrl && !savedUrl) {
+    localStorage.setItem(SUPABASE_PROJECT_KEY, currentUrl);
+  }
+
+  return false;
+}
+
+async function fetchAuthSession(): Promise<AuthUser | null> {
+  try {
+    const res = await fetch('/api/auth/session', { credentials: 'same-origin' });
+    if (!res.ok) return null;
+    const body = (await res.json()) as { user?: AuthUser | null };
+    return body.user ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function postAuthJson<T>(path: string, payload?: unknown): Promise<T> {
+  let res: Response;
+  try {
+    res = await fetch(path, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: payload ? { 'Content-Type': 'application/json' } : undefined,
+      body: payload ? JSON.stringify(payload) : undefined,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Failed to fetch';
+    throw new Error(mapAuthErrorMessage(message));
+  }
+
+  const body = (await res.json().catch(() => ({}))) as { error?: string; user?: AuthUser };
+  if (!res.ok) {
+    throw new Error(body.error ?? mapAuthErrorMessage('Request failed'));
+  }
+  return body as T;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const supabase = getSupabaseClient();
-    if (isSupabaseConfigured() && supabase) {
-      supabase.auth.getUser().then(({ data }) => {
-        if (data.user) {
-          setUser({
-            id: data.user.id,
-            email: data.user.email ?? '',
-            display_name:
-              (data.user.user_metadata?.display_name as string) ??
-              data.user.email?.split('@')[0] ??
-              'User',
-          });
-        }
-        setLoading(false);
-      });
+    const projectChanged = detectProjectChange();
 
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-        if (session?.user) {
-          setUser({
-            id: session.user.id,
-            email: session.user.email ?? '',
-            display_name:
-              (session.user.user_metadata?.display_name as string) ??
-              session.user.email?.split('@')[0] ??
-              'User',
-          });
-        } else {
-          setUser(null);
-        }
+    if (isSupabaseConfigured()) {
+      if (projectChanged) {
+        fetch('/api/auth/signout', { method: 'POST', credentials: 'same-origin' }).catch(() => {});
+        setUser(null);
         setLoading(false);
-      });
+        return;
+      }
 
-      return () => subscription.unsubscribe();
+      fetchAuthSession()
+        .then((sessionUser) => setUser(sessionUser))
+        .finally(() => setLoading(false));
+      return;
     }
 
     setUser(loadDemoSession());
@@ -85,19 +134,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const supabase = getSupabaseClient();
-    if (isSupabaseConfigured() && supabase) {
-      const { data, error } = await supabase.auth.signInWithPassword({
+    if (isSupabaseConfigured()) {
+      const body = await postAuthJson<{ user: AuthUser }>('/api/auth/signin', {
         email: email.trim().toLowerCase(),
         password,
       });
-      if (error) throw error;
-      const u = {
-        id: data.user!.id,
-        email: data.user!.email ?? email,
-        display_name: (data.user!.user_metadata?.display_name as string) ?? email.split('@')[0],
-      };
-      setUser(u);
+      setUser(body.user);
       return;
     }
     const demo = memory.authenticateDemo(email, password);
@@ -108,25 +150,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUp = async (name: string, email: string, password: string) => {
-    const supabase = getSupabaseClient();
-    if (isSupabaseConfigured() && supabase) {
-      const normalized = email.trim().toLowerCase();
-      const { data, error } = await supabase.auth.signUp({
-        email: normalized,
-        password,
-        options: { data: { display_name: name } },
-      });
-      if (error) throw error;
-      await supabase.from('profiles').upsert({
-        id: data.user!.id,
-        display_name: name || normalized.split('@')[0],
-        email: normalized,
-      });
-      setUser({
-        id: data.user!.id,
-        email: normalized,
-        display_name: name || normalized.split('@')[0],
-      });
+    if (isSupabaseConfigured()) {
+      try {
+        const body = await postAuthJson<{ user: AuthUser }>('/api/auth/signup', {
+          name,
+          email: email.trim().toLowerCase(),
+          password,
+        });
+        setUser(body.user);
+      } catch (err) {
+        if (err instanceof Error) {
+          if (err.message === 'RATE_LIMIT') throw new Error('RATE_LIMIT');
+          if (err.message === 'CONFIRM_EMAIL') throw new Error('CONFIRM_EMAIL');
+          throw new Error(mapAuthErrorMessage(err.message));
+        }
+        throw err;
+      }
       return;
     }
     memory.registerDemoUser(email, password, name);
@@ -137,8 +176,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    const supabase = getSupabaseClient();
-    if (isSupabaseConfigured() && supabase) await supabase.auth.signOut();
+    if (isSupabaseConfigured()) {
+      await fetch('/api/auth/signout', { method: 'POST', credentials: 'same-origin' }).catch(() => {});
+    }
     saveDemoSession(null);
     setUser(null);
   };
@@ -147,7 +187,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const supabase = getSupabaseClient();
     if (isSupabaseConfigured() && supabase) {
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase());
-      if (error) throw error;
+      if (error) throw new Error(mapAuthErrorMessage(error.message));
       return;
     }
     // Demo mode: simulate success
@@ -216,6 +256,9 @@ export function EsmeryProvider({ children }: { children: ReactNode }) {
     };
     load();
   }, [user]);
+
+  // Auto-refresh notifications, nudges, check-in times (matches Android 10s polling)
+  useAutoRefresh(refresh, Boolean(user), 15_000);
 
   return (
     <EsmeryContext.Provider value={{ state, loading, refresh }}>

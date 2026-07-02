@@ -19,12 +19,15 @@ import { useLanguage } from '@/lib/i18n/useLanguage';
 import { t } from '@/lib/i18n/translations';
 import styles from './BottomNav.module.css';
 
-const primaryTabs = [
-  { href: '/dashboard', icon: Home, key: 'hearth' as const },
-  { href: '/dashboard/circle', icon: Users, key: 'circle' as const },
-  { href: '/dashboard/crisis', icon: AlertTriangle, key: 'crisis' as const, accent: true },
-  { href: '/dashboard/plans', icon: CreditCard, key: 'nav_plans_short' as const },
-] as const;
+import type { LucideIcon } from 'lucide-react';
+
+type PrimaryTab = { href: string; icon: LucideIcon; key: 'hearth' | 'circle' | 'crisis' | 'nav_plans_short'; accent?: boolean };
+const primaryTabs: PrimaryTab[] = [
+  { href: '/dashboard', icon: Home, key: 'hearth' },
+  { href: '/dashboard/circle', icon: Users, key: 'circle' },
+  { href: '/dashboard/crisis', icon: AlertTriangle, key: 'crisis', accent: true },
+  { href: '/dashboard/plans', icon: CreditCard, key: 'nav_plans_short' },
+];
 
 const moreTabs = [
   { href: '/dashboard/timeline', icon: Clock, key: 'timeline' as const },

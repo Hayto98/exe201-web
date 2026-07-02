@@ -33,6 +33,7 @@ export function emptyUserState(userId: string, displayName: string, email?: stri
     subscriptionStatus: { user_id: userId, plan: 'basic', is_active: true },
     notificationDeliveries: [],
     alertIncidents: [],
+    alertJobs: [],
     locationShares: [],
     paymentOrders: [],
     entitlement: {
@@ -42,6 +43,7 @@ export function emptyUserState(userId: string, displayName: string, email?: stri
       source: 'basic',
       updated_at: now,
     },
+    auditLogs: [],
   };
 }
 

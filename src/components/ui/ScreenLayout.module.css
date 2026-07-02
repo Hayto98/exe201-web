@@ -1,43 +1,87 @@
 .layout {
   max-width: 720px;
   margin: 0 auto;
-  padding: var(--space-xl) var(--space-lg);
-  padding-bottom: calc(var(--bottom-nav-height) + var(--space-xl));
+  padding: var(--space-lg) max(var(--space-lg), env(safe-area-inset-right, 0px))
+    calc(var(--bottom-nav-height) + var(--space-xl))
+    max(var(--space-lg), env(safe-area-inset-left, 0px));
+  padding-top: max(var(--space-lg), env(safe-area-inset-top, 0px));
 }
 
 @media (min-width: 1024px) {
   .layout {
     max-width: 800px;
-    padding-bottom: var(--space-xxl);
+    padding: var(--space-xl) var(--space-lg) var(--space-xxl);
   }
 }
 
 .header {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: var(--space-lg);
-  margin-bottom: var(--space-xl);
+  flex-direction: column;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  margin-left: auto;
+}
+
+.headerMain {
+  min-width: 0;
+  width: 100%;
 }
 
 .title {
-  font-family: var(--font-display);
-  font-size: 1.75rem;
-  font-weight: 700;
+  font-family: var(--font-body);
+  font-size: clamp(1.25rem, 4.5vw, 1.75rem);
+  font-weight: 800;
   color: var(--color-cocoa);
-  margin: 0 0 var(--space-xs);
+  margin: 0;
+  line-height: 1.25;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .subtitle {
   color: var(--color-taupe);
-  margin: 0;
-  font-size: 0.95rem;
+  margin: var(--space-sm) 0 0;
+  font-size: 0.925rem;
+  line-height: 1.45;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
-.actions {
-  display: flex;
-  gap: var(--space-sm);
-  flex-shrink: 0;
+@media (min-width: 768px) {
+  .header {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--space-lg);
+    margin-bottom: var(--space-xl);
+  }
+
+  .toolbar {
+    order: 2;
+    width: auto;
+    flex-shrink: 0;
+  }
+
+  .headerMain {
+    order: 1;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .title {
+    font-family: var(--font-display);
+    font-weight: 700;
+  }
 }
 
 .content {

@@ -20,19 +20,41 @@ export default function SignUpPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<{ text: string; variant: 'error' | 'success' } | null>(null);
 
   const handleSignUp = async () => {
     if (!name || !email || !password) {
-      setMessage(tInline(lang, 'Fill in all fields.', 'Điền đầy đủ thông tin.'));
+      setMessage({ text: tInline(lang, 'Fill in all fields.', 'Điền đầy đủ thông tin.'), variant: 'error' });
+      return;
+    }
+    if (password.length < 6) {
+      setMessage({ text: tInline(lang, 'Password must be at least 6 characters.', 'Mật khẩu phải có ít nhất 6 ký tự.'), variant: 'error' });
       return;
     }
     setLoading(true);
+    setMessage(null);
     try {
       await signUp(name, email, password);
       router.push('/onboarding');
     } catch (err: unknown) {
-      setMessage(err instanceof Error ? err.message : 'Sign up failed');
+      const msg = err instanceof Error ? err.message : 'Sign up failed';
+      if (msg === 'CONFIRM_EMAIL') {
+        setMessage({
+          text: tInline(lang,
+            '✅ Account created! Check your email to confirm, then sign in.',
+            '✅ Tạo tài khoản thành công! Kiểm tra email để xác nhận, sau đó đăng nhập.'),
+          variant: 'success',
+        });
+      } else if (msg === 'RATE_LIMIT') {
+        setMessage({
+          text: tInline(lang,
+            '⏳ Too many attempts. Please wait a moment and try again.',
+            '⏳ Quá nhiều lần thử. Vui lòng đợi một lát rồi thử lại.'),
+          variant: 'error',
+        });
+      } else {
+        setMessage({ text: msg, variant: 'error' });
+      }
     }
     setLoading(false);
   };
@@ -51,7 +73,7 @@ export default function SignUpPage() {
           <EsmeryTextField value={name} onChange={setName} label={tInline(lang, 'Full name', 'Họ tên')} />
           <EsmeryTextField value={email} onChange={setEmail} label="Email" type="email" />
           <EsmeryTextField value={password} onChange={setPassword} label={tInline(lang, 'Password', 'Mật khẩu')} password />
-          {message && <InlineMessage text={message} variant="error" />}
+          {message && <InlineMessage text={message.text} variant={message.variant} />}
           <PrimaryButton text={tInline(lang, 'Sign Up', 'Tạo tài khoản')} loading={loading} onClick={handleSignUp} />
           <Link href="/auth/signin" className="textButton" style={{ textAlign: 'center', display: 'block' }}>
             {tInline(lang, 'Already have an account? Sign in', 'Đã có tài khoản? Đăng nhập')}

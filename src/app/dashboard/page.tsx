@@ -7,10 +7,11 @@ import {
   BellRing,
   Check,
   CheckCircle,
-  Users as Group,
+  Clock,
   LogOut,
   MailCheck,
   TriangleAlert,
+  Users as Group,
 } from 'lucide-react';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { InfoCard } from '@/components/ui/InfoCard';
@@ -20,8 +21,11 @@ import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { InlineMessage } from '@/components/ui/InlineMessage';
 import { useAuth, useEsmeryState } from '@/contexts/AppProviders';
 import { useLanguage } from '@/lib/i18n/useLanguage';
-import { useTimeGreeting } from '@/lib/i18n/useTimeGreeting';
+import { useTimeGreetingPrefix } from '@/lib/i18n/useTimeGreetingPrefix';
 import { tInline, friendlyTime } from '@/lib/i18n/translations';
+import { isSupabaseConfigured } from '@/lib/supabase/client';
+import { checkInSupabase } from '@/lib/repository/supabaseRepository';
+import { markAllNotificationsRead } from '@/lib/repository/notifications';
 import * as memory from '@/lib/repository/memoryRepository';
 import styles from './hearth.module.css';
 
@@ -31,10 +35,8 @@ export default function HearthPage() {
   const { lang } = useLanguage();
   const router = useRouter();
   const [toast, setToast] = useState<string | null>(null);
-  const greeting = useTimeGreeting(
-    lang,
-    state?.profile.display_name ?? user?.display_name ?? 'ESMERY'
-  );
+  const greetingPrefix = useTimeGreetingPrefix(lang);
+  const displayName = state?.profile.display_name ?? user?.display_name ?? 'ESMERY';
 
   if (!state) return null;
 
@@ -43,12 +45,22 @@ export default function HearthPage() {
   const acceptedCount = state.circleMembers.filter((m) => m.status === 'accepted').length;
   const pendingDeliveries = state.notificationDeliveries.filter((d) => d.status === 'pending').length;
   const activeAlert = state.alertIncidents.find((i) => i.status === 'active' || i.status === 'escalated');
+  const lastCheckInLabel = friendlyTime(state.profile.last_safe_at, lang);
 
   const handleCheckIn = async () => {
     if (!user) return;
-    memory.checkIn(user.id);
-    await refresh();
-    setToast(tInline(lang, 'Your circle has been notified.', 'Vòng thân của bạn đã được thông báo.'));
+    try {
+      if (isSupabaseConfigured()) {
+        await checkInSupabase(user.id);
+      } else {
+        memory.checkIn(user.id);
+      }
+      await refresh();
+      setToast(tInline(lang, 'Your circle has been notified.', 'Vòng thân của bạn đã được thông báo.'));
+    } catch (err) {
+      console.error('[checkIn]', err);
+      setToast(tInline(lang, 'Check-in failed. Please try again.', 'Xác nhận thất bại. Vui lòng thử lại.'));
+    }
     setTimeout(() => setToast(null), 3500);
   };
 
@@ -61,17 +73,35 @@ export default function HearthPage() {
 
   return (
     <ScreenLayout
-      title={greeting}
-      subtitle={tInline(
-        lang,
-        `Last check-in: ${friendlyTime(state.profile.last_safe_at, lang)}`,
-        `Lần xác nhận gần nhất: ${friendlyTime(state.profile.last_safe_at, lang)}`
-      )}
+      title={
+        <span className={styles.hero}>
+          <span className={styles.greetingPrefix}>{greetingPrefix}</span>
+          <span className={styles.greetingName}>{displayName}</span>
+        </span>
+      }
+      subtitle={
+        <span className={styles.checkInBadge}>
+          <Clock size={15} aria-hidden />
+          {tInline(
+            lang,
+            `Last check-in: ${lastCheckInLabel}`,
+            `Lần xác nhận gần nhất: ${lastCheckInLabel}`
+          )}
+        </span>
+      }
       actions={
-        <>
+        <div className={styles.toolbarActions}>
           <LanguageButton />
-          <PrimaryButton text={tInline(lang, 'Sign Out', 'Đăng xuất')} icon={<LogOut size={16} />} onClick={handleLogout} fullWidth={false} variant="outline" size="small" />
-        </>
+          <button
+            type="button"
+            className={styles.iconAction}
+            onClick={handleLogout}
+            aria-label={tInline(lang, 'Sign Out', 'Đăng xuất')}
+          >
+            <LogOut size={16} />
+            <span className={styles.iconActionLabel}>{tInline(lang, 'Sign Out', 'Đăng xuất')}</span>
+          </button>
+        </div>
       }
     >
       {toast && (
@@ -79,11 +109,13 @@ export default function HearthPage() {
           <InlineMessage text={toast} variant="success" />
         </div>
       )}
-      <SafeButton
-        label={tInline(lang, "I'm Safe", 'Tôi an toàn')}
-        successLabel={tInline(lang, 'All safe!', 'An toàn rồi!')}
-        onClick={handleCheckIn}
-      />
+      <div className={styles.safeSection}>
+        <SafeButton
+          label={tInline(lang, "I'm Safe", 'Tôi an toàn')}
+          successLabel={tInline(lang, 'All safe!', 'An toàn rồi!')}
+          onClick={handleCheckIn}
+        />
+      </div>
       <InfoCard
         icon={<BellRing size={24} />}
         title={tInline(lang, 'Safety signal ready', 'Tín hiệu an toàn đã sẵn sàng')}
@@ -118,7 +150,7 @@ export default function HearthPage() {
       />
       {recentNotifications.length > 0 && (
         <>
-          <h3 style={{ fontWeight: 800, margin: '8px 0 0', color: 'var(--color-cocoa)' }}>
+          <h3 className={styles.sectionTitle}>
             {tInline(lang, 'Recent notifications', 'Thông báo gần đây')}
           </h3>
           {recentNotifications.map((n) => (
@@ -137,9 +169,10 @@ export default function HearthPage() {
               icon={<MailCheck size={16} />}
               onClick={async () => {
                 if (!user) return;
-                recentNotifications.forEach((n) => {
-                  if (!n.is_read) memory.markNotificationRead(user.id, n.id);
-                });
+                await markAllNotificationsRead(
+                  user.id,
+                  recentNotifications.filter((n) => !n.is_read).map((n) => n.id)
+                );
                 await refresh();
               }}
             />

@@ -26,6 +26,35 @@ function eventIcon(type: TimelineEventType) {
   }
 }
 
+function formatTimestamp(isoString: string, lang: string): string {
+  const date = new Date(isoString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  const diffHour = Math.floor(diffMs / 3600000);
+  const diffDay = Math.floor(diffMs / 86400000);
+
+  const isVi = lang === 'vi';
+
+  const timeStr = date.toLocaleTimeString(isVi ? 'vi-VN' : 'en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+  const dateStr = date.toLocaleDateString(isVi ? 'vi-VN' : 'en-US', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+
+  if (diffMin < 1) return isVi ? `${timeStr} · Vừa xong` : `${timeStr} · Just now`;
+  if (diffMin < 60) return isVi ? `${timeStr} · ${diffMin} phút trước` : `${timeStr} · ${diffMin}m ago`;
+  if (diffHour < 24) return isVi ? `${timeStr} · ${diffHour} giờ trước` : `${timeStr} · ${diffHour}h ago`;
+  if (diffDay < 7) return isVi ? `${timeStr} · ${dateStr} (${diffDay} ngày trước)` : `${timeStr} · ${dateStr} (${diffDay}d ago)`;
+
+  // Older than 7 days — show full date and time
+  return `${timeStr} · ${dateStr}`;
+}
+
 export default function TimelinePage() {
   const { state } = useEsmeryState();
   const { lang } = useLanguage();
@@ -46,9 +75,11 @@ export default function TimelinePage() {
             icon={eventIcon(e.type)}
             title={localizedEventText(lang, e.title)}
             body={localizedEventText(lang, e.body)}
+            timestamp={e.created_at ? formatTimestamp(e.created_at, lang) : undefined}
           />
         ))
       )}
     </ScreenLayout>
   );
 }
+

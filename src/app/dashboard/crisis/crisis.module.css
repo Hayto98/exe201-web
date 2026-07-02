@@ -1,6 +1,113 @@
-.contactRow { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
-.contactActions { display: flex; gap: 8px; align-items: center; }
-.callBtn { width: 36px; height: 36px; background: var(--gradient-primary); color: white; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; }
-.iconBtn { width: 36px; height: 36px; border: none; background: rgba(255, 107, 157, 0.1); border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; justify-content: center; }
-.meta { font-size: 0.75rem; color: var(--color-taupe); }
-.mapLink { color: var(--color-primary-dark); font-weight: 700; }
+.contactSection {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--color-cocoa);
+}
+
+.sectionHint {
+  margin: -4px 0 0;
+  font-size: 0.875rem;
+  color: var(--color-taupe);
+}
+
+.contactCard {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.contactAvatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  color: white;
+  background: var(--gradient-primary);
+  flex-shrink: 0;
+}
+
+.contactInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.contactInfo strong {
+  color: var(--color-cocoa);
+  font-size: 1rem;
+}
+
+.contactInfo span {
+  color: var(--color-taupe);
+  font-size: 0.875rem;
+}
+
+.meta {
+  font-size: 0.75rem !important;
+}
+
+.callHint {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: rgba(52, 199, 89, 0.12);
+  color: #248a3d;
+  font-size: 0.75rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.contactTools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 107, 157, 0.12);
+}
+
+.toolBtn,
+.toolBtnDanger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border: none;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.toolBtn {
+  background: rgba(255, 107, 157, 0.1);
+  color: var(--color-cocoa);
+}
+
+.toolBtnDanger {
+  background: rgba(220, 53, 69, 0.08);
+  color: #b42318;
+}
+
+.mapLink {
+  color: var(--color-primary-dark);
+  font-weight: 700;
+}

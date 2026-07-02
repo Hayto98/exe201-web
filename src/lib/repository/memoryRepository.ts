@@ -1,7 +1,9 @@
 import { newId } from '@/lib/utils';
 import { buildSepayQrUrl } from '@/lib/sepay';
+import { generateSepayTransferCode, isValidSepayTransferCode } from '@/lib/payment/sepayReference';
 import type {
   CircleStatus,
+  EsmeryNotification,
   EsmeryState,
   EmergencyContact,
   FriendRequest,
@@ -76,6 +78,17 @@ export function refreshState(userId: string): EsmeryState {
   return getState(userId);
 }
 
+function appendNotificationForUser(
+  targetUserId: string,
+  notification: Omit<EsmeryNotification, 'id' | 'user_id'>
+) {
+  if (!states.has(targetUserId)) return;
+  mutate(targetUserId, (s) => ({
+    ...s,
+    notifications: [{ id: id(), user_id: targetUserId, ...notification }, ...s.notifications],
+  }));
+}
+
 export function checkIn(userId: string, note?: string) {
   const ts = now();
   mutate(userId, (s) => ({
@@ -92,18 +105,6 @@ export function checkIn(userId: string, note?: string) {
         created_at: ts,
       },
       ...s.timelineEvents,
-    ],
-    notifications: [
-      {
-        id: id(),
-        user_id: userId,
-        type: 'check_in_success',
-        title: 'Check-in sent',
-        body: 'Your circle has been notified that you are safe.',
-        is_read: false,
-        created_at: ts,
-      },
-      ...s.notifications,
     ],
     circleMembers: s.circleMembers.map((m) => ({ ...m, last_safe_at: ts })),
     alertIncidents: s.alertIncidents.map((i) =>
@@ -174,7 +175,8 @@ export function updateFriendRequest(userId: string, requestId: string, status: C
 
 export function sendNudge(userId: string, memberId: string) {
   const ts = now();
-  const member = getState(userId).circleMembers.find((m) => m.id === memberId);
+  const sender = getState(userId);
+  const member = sender.circleMembers.find((m) => m.id === memberId);
   mutate(userId, (s) => ({
     ...s,
     timelineEvents: [
@@ -188,23 +190,21 @@ export function sendNudge(userId: string, memberId: string) {
       },
       ...s.timelineEvents,
     ],
-    notifications: [
-      {
-        id: id(),
-        user_id: userId,
-        type: 'gentle_nudge',
-        title: 'Gentle nudge sent',
-        body: `A gentle reminder was sent to ${member?.name ?? 'your circle member'}.`,
-        is_read: false,
-        created_at: ts,
-      },
-      ...s.notifications,
-    ],
   }));
+  if (member?.member_user_id && member.member_user_id !== userId) {
+    appendNotificationForUser(member.member_user_id, {
+      type: 'gentle_nudge',
+      title: 'Gentle nudge received',
+      body: `${sender.profile.display_name} sent you a gentle nudge.`,
+      is_read: false,
+      created_at: ts,
+    });
+  }
 }
 
 export function shareMoment(userId: string, caption: string, imageUrl: string) {
   const ts = now();
+  const sender = getState(userId);
   mutate(userId, (s) => ({
     ...s,
     moments: [
@@ -222,19 +222,19 @@ export function shareMoment(userId: string, caption: string, imageUrl: string) {
       },
       ...s.timelineEvents,
     ],
-    notifications: [
-      {
-        id: id(),
-        user_id: userId,
-        type: 'moment_shared',
-        title: 'Moment shared',
-        body: caption,
-        is_read: false,
-        created_at: ts,
-      },
-      ...s.notifications,
-    ],
   }));
+  for (const member of sender.circleMembers) {
+    if (member.status !== 'accepted' || !member.member_user_id || member.member_user_id === userId) {
+      continue;
+    }
+    appendNotificationForUser(member.member_user_id, {
+      type: 'moment_shared',
+      title: `${sender.profile.display_name} shared a moment`,
+      body: caption,
+      is_read: false,
+      created_at: ts,
+    });
+  }
 }
 
 export function markNotificationRead(userId: string, notificationId: string) {
@@ -431,30 +431,68 @@ export function updateProfile(userId: string, displayName: string, avatarUrl?: s
   }));
 }
 
+export function ensureUserSepayReferenceCode(userId: string): string {
+  const s = getState(userId);
+  const existing = s.profile.sepay_reference_code;
+  if (existing && isValidSepayTransferCode(existing)) {
+    return existing.toUpperCase();
+  }
+
+  for (let attempt = 0; attempt < 25; attempt++) {
+    const code = generateSepayTransferCode();
+    const taken = [...states.values()].some(
+      (state) =>
+        state.profile.id !== userId &&
+        state.profile.sepay_reference_code?.toUpperCase() === code
+    );
+    if (taken) continue;
+    mutate(userId, (current) => ({
+      ...current,
+      profile: { ...current.profile, sepay_reference_code: code },
+    }));
+    return code;
+  }
+
+  throw new Error('Không thể tạo mã chuyển khoản, vui lòng thử lại.');
+}
+
 export function createPaymentOrder(userId: string, plan: SubscriptionPlan) {
   const ts = now();
   const amounts = { basic: 0, monthly: 49000, yearly: 499000 };
-  const ref = `ESM-${userId.slice(0, 8)}-${Date.now()}`;
+  const ref = ensureUserSepayReferenceCode(userId);
   const amount = amounts[plan];
   const qrUrl = amount > 0 ? buildSepayQrUrl(amount, ref) : null;
-  mutate(userId, (s) => ({
-    ...s,
-    paymentOrders: [
-      {
-        id: id(),
-        user_id: userId,
-        provider: 'sepay',
-        plan,
-        amount_vnd: amount,
-        status: 'pending',
-        reference_code: ref,
-        qr_url: qrUrl,
-        created_at: ts,
-        updated_at: ts,
-      },
-      ...s.paymentOrders,
-    ],
-  }));
+  mutate(userId, (s) => {
+    const pending = s.paymentOrders.find((o) => o.provider === 'sepay' && o.status === 'pending');
+    if (pending) {
+      return {
+        ...s,
+        paymentOrders: s.paymentOrders.map((o) =>
+          o.id === pending.id
+            ? { ...o, plan, amount_vnd: amount, reference_code: ref, qr_url: qrUrl, updated_at: ts }
+            : o
+        ),
+      };
+    }
+    return {
+      ...s,
+      paymentOrders: [
+        ...s.paymentOrders,
+        {
+          id: id(),
+          user_id: userId,
+          provider: 'sepay',
+          plan,
+          amount_vnd: amount,
+          status: 'pending',
+          reference_code: ref,
+          qr_url: qrUrl,
+          created_at: ts,
+          updated_at: ts,
+        },
+      ],
+    };
+  });
   return { reference: ref, qrUrl, amount };
 }
 

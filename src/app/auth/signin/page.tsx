@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AppProviders';
 import { useLanguage } from '@/lib/i18n/useLanguage';
 import { tInline } from '@/lib/i18n/translations';
 import { isDemoMode } from '@/lib/repository/memoryRepository';
+import { mapAuthErrorMessage } from '@/lib/auth/errors';
 
 export default function SignInPage() {
   const router = useRouter();
@@ -36,8 +37,9 @@ export default function SignInPage() {
       await signIn(email, password);
       router.push('/dashboard');
     } catch (err: unknown) {
+      const raw = err instanceof Error ? err.message : tInline(lang, 'Sign in failed.', 'Đăng nhập thất bại.');
       setMessage({
-        text: err instanceof Error ? err.message : tInline(lang, 'Sign in failed.', 'Đăng nhập thất bại.'),
+        text: mapAuthErrorMessage(raw, lang === 'vi' ? 'vi' : 'en'),
         variant: 'error',
       });
     }

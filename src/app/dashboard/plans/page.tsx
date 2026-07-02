@@ -10,7 +10,7 @@ import { useAuth, useEsmeryState } from '@/contexts/AppProviders';
 import { useLanguage } from '@/lib/i18n/useLanguage';
 import { tInline } from '@/lib/i18n/translations';
 import { choosePlan as applyPlan } from '@/lib/repository/plans';
-import { resolveSepayQrUrl, getSepayBankAccount } from '@/lib/sepay';
+import { resolveSepayQrUrl, getSepayBankAccount, getSepayBankCode } from '@/lib/sepay';
 import type { SubscriptionPlan } from '@/lib/repository/types';
 import styles from './plans.module.css';
 
@@ -131,7 +131,11 @@ export default function PlansPage() {
         </p>
         {pendingPlan && !isPremium && (
           <p style={{ margin: '8px 0 0', color: 'var(--color-primary-dark)', fontSize: '0.875rem' }}>
-            {tInline(lang, 'Complete payment to activate premium.', 'Hoàn tất thanh toán để kích hoạt premium.')}
+            {tInline(
+              lang,
+              'Complete payment to activate premium. You can switch plans or choose Basic to cancel.',
+              'Hoàn tất thanh toán để kích hoạt premium. Có thể đổi gói khác hoặc chọn Cơ bản để hủy.'
+            )}
           </p>
         )}
       </CardBlock>
@@ -143,10 +147,18 @@ export default function PlansPage() {
             {tInline(lang, 'Transfer amount', 'Số tiền')}: <strong>{latestOrder.amount_vnd.toLocaleString('vi-VN')}đ</strong>
           </p>
           <p style={{ color: 'var(--color-taupe)', margin: '4px 0' }}>
-            {tInline(lang, 'Content', 'Nội dung CK')}: <strong>{latestOrder.reference_code}</strong>
+            {tInline(lang, 'Transfer content (fixed)', 'Nội dung CK (cố định)')}:{' '}
+            <strong>{latestOrder.reference_code}</strong>
+          </p>
+          <p style={{ color: 'var(--color-taupe)', margin: '4px 0', fontSize: '0.8rem' }}>
+            {tInline(
+              lang,
+              'Use this same code for every payment. SePay webhook matches ESM + 6 digits.',
+              'Dùng mã này cho mọi lần chuyển khoản. Webhook SePay nhận dạng ESM + 6 số.'
+            )}
           </p>
           <p style={{ color: 'var(--color-taupe)', margin: '4px 0', fontSize: '0.875rem' }}>
-            {process.env.NEXT_PUBLIC_SEPAY_BANK ?? 'MBBank'} · {getSepayBankAccount()}
+            {getSepayBankCode()} · {getSepayBankAccount()}
           </p>
           <img
             src={resolveSepayQrUrl(latestOrder.qr_url, latestOrder.amount_vnd, latestOrder.reference_code)}

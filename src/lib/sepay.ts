@@ -1,11 +1,19 @@
 /** SePay VietQR — https://developer.sepay.vn/vi/sepay-webhooks/tao-qr-va-form-thanh-toan */
 
 export function getSepayBankAccount() {
-  return process.env.NEXT_PUBLIC_SEPAY_BANK_ACCOUNT ?? '0366299780';
+  return (
+    process.env.NEXT_PUBLIC_SEPAY_BANK_ACCOUNT ??
+    process.env.SEPAY_ACCOUNT_NUMBER ??
+    '0963646027'
+  );
 }
 
 export function getSepayBankCode() {
-  return process.env.NEXT_PUBLIC_SEPAY_BANK ?? 'MBBank';
+  return (
+    process.env.NEXT_PUBLIC_SEPAY_BANK ??
+    process.env.SEPAY_BANK_CODE?.trim() ??
+    'MB'
+  );
 }
 
 export function buildSepayQrUrl(amount: number, description: string): string {

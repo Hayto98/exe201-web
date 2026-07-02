@@ -73,10 +73,38 @@ export function timeGreeting(lang: Language, name: string, date = new Date()): s
   return tInline(lang, `${en}, ${name}`, `${vi}, ${name}`);
 }
 
+export function timeGreetingPrefix(lang: Language, date = new Date()): string {
+  const period = getDayPeriod(date);
+  const [en, vi] = GREETINGS[period];
+  return tInline(lang, en, vi);
+}
+
 export function friendlyTime(value?: string | null, lang: Language = 'en'): string {
   if (!value) return tInline(lang, 'not yet', 'chưa có');
-  const time = value.includes('T') ? value.substring(value.indexOf('T') + 1, value.indexOf('T') + 6) : value;
-  return time || value;
+  const date = new Date(value);
+  if (isNaN(date.getTime())) return value;
+
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  const diffHour = Math.floor(diffMs / 3600000);
+
+  const isVi = lang === 'vi';
+
+  if (diffMin < 1) return isVi ? 'vừa xong' : 'just now';
+  if (diffMin < 60) return isVi ? `${diffMin} phút trước` : `${diffMin}m ago`;
+  if (diffHour < 24) {
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+  }
+
+  // Older than 24h — show date + time in local timezone
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  return `${hours}:${minutes} · ${day}/${month}`;
 }
 
 export function localizedEventText(lang: Language, value: string): string {
@@ -87,6 +115,9 @@ export function localizedEventText(lang: Language, value: string): string {
     'Circle invitation accepted': ['Circle invitation accepted', 'Đã chấp nhận lời mời'],
     'Circle invitation declined': ['Circle invitation declined', 'Đã từ chối lời mời'],
     'Gentle nudge sent': ['Gentle nudge sent', 'Đã gửi nhắc nhở nhẹ nhàng'],
+    'Gentle nudge received': ['Gentle nudge received', 'Nhận nhắc nhẹ'],
+    'Check-in sent': ['Check-in sent', 'Đã xác nhận an toàn'],
+    'Circle invitation received': ['Circle invitation received', 'Nhận lời mời vòng thân'],
     'Moment shared': ['Moment shared', 'Đã chia sẻ khoảnh khắc'],
     'Emergency alert sent': ['Emergency alert sent', 'Đã gửi cảnh báo khẩn cấp'],
     'Morning check-in': ['Morning check-in', 'Xác nhận an toàn buổi sáng'],

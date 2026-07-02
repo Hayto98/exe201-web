@@ -1,21 +1,27 @@
+import type { ReactNode } from 'react';
+import { NotificationBell } from '@/components/ui/NotificationBell';
 import styles from './ScreenLayout.module.css';
 
 interface ScreenLayoutProps {
-  title: string;
-  subtitle?: string;
-  actions?: React.ReactNode;
-  children: React.ReactNode;
+  title: ReactNode;
+  subtitle?: ReactNode;
+  actions?: ReactNode;
+  children: ReactNode;
+  hideNotifications?: boolean;
 }
 
-export function ScreenLayout({ title, subtitle, actions, children }: ScreenLayoutProps) {
+export function ScreenLayout({ title, subtitle, actions, children, hideNotifications }: ScreenLayoutProps) {
   return (
     <div className={styles.layout}>
       <header className={styles.header}>
-        <div>
-          <h1 className={styles.title}>{title}</h1>
-          {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
+        <div className={styles.toolbar}>
+          {!hideNotifications && <NotificationBell />}
+          {actions}
         </div>
-        {actions && <div className={styles.actions}>{actions}</div>}
+        <div className={styles.headerMain}>
+          <h1 className={styles.title}>{title}</h1>
+          {subtitle && <div className={styles.subtitle}>{subtitle}</div>}
+        </div>
       </header>
       <div className={styles.content}>{children}</div>
     </div>
