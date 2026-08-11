@@ -12,6 +12,8 @@ import { useAuth, useEsmeryState } from '@/contexts/AppProviders';
 import { useLanguage } from '@/lib/i18n/useLanguage';
 import { tInline } from '@/lib/i18n/translations';
 import * as memory from '@/lib/repository/memoryRepository';
+import { isSupabaseConfigured } from '@/lib/supabase/client';
+import { updateProfileSupabase } from '@/lib/repository/supabaseRepository';
 
 export default function ProfilePage() {
   const { user, signOut } = useAuth();
@@ -19,7 +21,7 @@ export default function ProfilePage() {
   const { lang } = useLanguage();
   const [displayName, setDisplayName] = useState('');
   const [newPassword, setNewPassword] = useState('');
-  const [msg, setMsg] = useState<string | null>(null);
+  const [msg, setMsg] = useState<{ text: string; variant: 'success' | 'error' } | null>(null);
   const [showDelete, setShowDelete] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -28,9 +30,14 @@ export default function ProfilePage() {
   const name = displayName || state.profile.display_name;
 
   const saveProfile = async () => {
-    memory.updateProfile(user.id, name, state.profile.avatar_url);
-    await refresh();
-    setMsg(tInline(lang, 'Profile saved.', 'Đã lưu hồ sơ.'));
+    try {
+      if (isSupabaseConfigured()) await updateProfileSupabase(user.id, name, state.profile.avatar_url);
+      else memory.updateProfile(user.id, name, state.profile.avatar_url);
+      await refresh();
+      setMsg({ text: tInline(lang, 'Profile saved.', 'Đã lưu hồ sơ.'), variant: 'success' });
+    } catch (error) {
+      setMsg({ text: error instanceof Error ? error.message : tInline(lang, 'Could not save profile.', 'Không thể lưu hồ sơ.'), variant: 'error' });
+    }
   };
 
   const handleAvatar = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -47,7 +54,7 @@ export default function ProfilePage() {
       title={tInline(lang, 'Profile', 'Hồ sơ')}
       subtitle={state.profile.email ?? user.email}
     >
-      {msg && <InlineMessage text={msg} variant="success" />}
+      {msg && <InlineMessage text={msg.text} variant={msg.variant} />}
 
       <CardBlock>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -70,7 +77,7 @@ export default function ProfilePage() {
       <CardBlock>
         <EsmeryTextField value={newPassword} onChange={setNewPassword} label={tInline(lang, 'New password', 'Mật khẩu mới')} password />
         <div style={{ marginTop: 12 }}>
-          <PrimaryButton text={tInline(lang, 'Change password', 'Đổi mật khẩu')} variant="outline" onClick={() => setMsg(tInline(lang, 'Password updated (demo).', 'Đã cập nhật mật khẩu (demo).'))} />
+          <PrimaryButton text={tInline(lang, 'Change password', 'Đổi mật khẩu')} variant="outline" onClick={() => setMsg({ text: tInline(lang, 'Password updated (demo).', 'Đã cập nhật mật khẩu (demo).'), variant: 'success' })} />
         </div>
       </CardBlock>
 

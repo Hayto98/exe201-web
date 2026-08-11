@@ -19,6 +19,11 @@ export function mapAuthErrorMessage(message: string, lang: 'en' | 'vi' = 'vi'): 
   if (lower.includes('rate limit')) {
     return lang === 'vi' ? 'Quá nhiều lần thử. Vui lòng đợi vài phút.' : 'Too many attempts. Please wait.';
   }
+  if (lower === 'request failed' || lower.includes('fetch failed') || lower.includes('không kết nối được dịch vụ')) {
+    return lang === 'vi'
+      ? 'Không kết nối được dịch vụ đăng ký Supabase. Kiểm tra mạng và cấu hình URL/key.'
+      : 'Could not reach the Supabase sign-up service. Check the network and URL/key configuration.';
+  }
   if (lower.includes('already registered') || lower.includes('already exists')) {
     return lang === 'vi' ? 'Email này đã được đăng ký. Hãy đăng nhập hoặc đặt lại mật khẩu.' : 'This email is already registered. Please sign in or reset your password.';
   }

@@ -24,17 +24,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Mật khẩu phải có ít nhất 6 ký tự.' }, { status: 400 });
   }
 
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: { display_name: name || email.split('@')[0] },
-      emailRedirectTo: new URL('/auth/signin', request.url).toString(),
-    },
-  });
+  let data;
+  let error;
+  try {
+    const result = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { display_name: name || email.split('@')[0] } },
+    });
+    data = result.data;
+    error = result.error;
+  } catch (caught) {
+    const message = caught instanceof Error ? caught.message : 'Không kết nối được dịch vụ đăng ký.';
+    console.error('[auth/signup] Supabase request failed:', message);
+    return NextResponse.json({ error: message }, { status: 503 });
+  }
 
   if (error) {
-    if (error.message?.includes('rate limit')) {
+    if (error.status === 429 || error.message?.toLowerCase().includes('rate limit')) {
       return NextResponse.json({ error: 'RATE_LIMIT' }, { status: 429 });
     }
     return NextResponse.json({ error: typeof error.message === 'string' ? error.message : 'SIGNUP_FAILED' }, { status: 400 });

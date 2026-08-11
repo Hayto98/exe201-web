@@ -1320,7 +1320,7 @@ export async function updateProfileSupabase(userId: string, displayName: string,
   const update: Record<string, unknown> = { display_name: displayName };
   if (avatarUrl !== undefined) update.avatar_url = avatarUrl;
 
-  const { error } = await supabase.from('profiles').update(update).eq('id', userId);
+  const { error } = await supabase.from('profiles').upsert({ id: userId, ...update }, { onConflict: 'id' });
   if (error) throw error;
 }
 
