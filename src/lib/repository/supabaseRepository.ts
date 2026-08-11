@@ -7,8 +7,9 @@ import {
   isValidSepayTransferCode,
 } from '@/lib/payment/sepayReference';
 import { newId } from '@/lib/utils';
-import type { CircleStatus, EmergencyContact, EsmeryState, PaymentOrder, Profile, SubscriptionPlan } from './types';
+import type { CheckIn, CircleStatus, EmergencyContact, EsmeryState, PaymentOrder, Profile, SafetyRhythm, SubscriptionPlan } from './types';
 import { emptyUserState } from './seed';
+import { getCheckInAvailability } from '@/lib/safety/checkInSchedule';
 
 async function fetchTable<T>(table: string, column: string, userId: string): Promise<T[]> {
   const supabase = getSupabaseClient();
@@ -152,11 +153,30 @@ export async function loadUserStateFromSupabase(
   );
 
   const resolvedProfile = profile ?? base.profile;
+  const yearlyExpired =
+    subscriptionStatus?.plan === 'yearly' &&
+    entitlement?.is_premium &&
+    Boolean(entitlement.valid_until) &&
+    new Date(entitlement.valid_until!).getTime() <= Date.now();
+
+  // A finished yearly plan always returns to Basic; this also prevents stale
+  // premium flags from granting access after its recorded end date.
+  if (yearlyExpired) {
+    await updateSubscriptionSupabase(userId, 'basic');
+  }
+
+  const resolvedSubscriptionStatus = yearlyExpired
+    ? { user_id: userId, plan: 'basic' as const, is_active: true }
+    : subscriptionStatus ?? base.subscriptionStatus;
+  const resolvedEntitlement = yearlyExpired
+    ? { ...base.entitlement, user_id: userId, updated_at: new Date().toISOString() }
+    : entitlement ?? base.entitlement;
 
   return {
     ...base,
     profile: {
       ...resolvedProfile,
+      is_premium: yearlyExpired ? false : resolvedProfile.is_premium,
       display_name: resolvedProfile.display_name || displayName || 'ESMERY Friend',
       email: resolvedProfile.email?.trim().toLowerCase() ?? normalizedEmail ?? undefined,
     },
@@ -169,13 +189,13 @@ export async function loadUserStateFromSupabase(
     emergencyContacts: emergencyContacts.sort((a, b) => a.name.localeCompare(b.name)),
     safetyRhythms: safetyRhythms.sort((a, b) => a.check_time.localeCompare(b.check_time)),
     safetySettings: safetySettings ?? base.safetySettings,
-    subscriptionStatus: subscriptionStatus ?? base.subscriptionStatus,
+    subscriptionStatus: resolvedSubscriptionStatus,
     notificationDeliveries: notificationDeliveries.sort((a, b) => b.created_at.localeCompare(a.created_at)),
     alertIncidents: alertIncidents.sort((a, b) => b.created_at.localeCompare(a.created_at)),
     alertJobs: alertJobs.sort((a, b) => b.run_at.localeCompare(a.run_at)),
     locationShares: locationShares.sort((a, b) => b.created_at.localeCompare(a.created_at)),
     paymentOrders: paymentOrders.sort((a, b) => b.created_at.localeCompare(a.created_at)),
-    entitlement: entitlement ?? base.entitlement,
+    entitlement: resolvedEntitlement,
     auditLogs: auditLogs.sort((a, b) => b.created_at.localeCompare(a.created_at)),
   };
 }
@@ -223,6 +243,16 @@ function dedupeCircleMembers(items: EsmeryState['circleMembers']): EsmeryState['
 export async function checkInSupabase(userId: string, note?: string) {
   const supabase = getSupabaseClient();
   if (!supabase) throw new Error('Supabase chưa cấu hình');
+
+  const [{ data: rhythms, error: rhythmError }, { data: checkIns, error: historyError }] = await Promise.all([
+    supabase.from('safety_rhythms').select('*').eq('user_id', userId),
+    supabase.from('check_ins').select('created_at').eq('user_id', userId),
+  ]);
+  if (rhythmError) throw rhythmError;
+  if (historyError) throw historyError;
+  if (!getCheckInAvailability((rhythms ?? []) as SafetyRhythm[], (checkIns ?? []) as Pick<CheckIn, 'created_at'>[]).canCheckIn) {
+    throw new Error('CHECK_IN_NOT_AVAILABLE');
+  }
 
   const ts = new Date().toISOString();
   const checkInId = newId();
@@ -449,9 +479,7 @@ function toPaymentError(error: { message?: string; code?: string }): Error {
     return new Error('Có nhiều đơn thanh toán trùng. Vui lòng thử lại — hệ thống sẽ tự gom về một đơn.');
   }
   if (error.code === '23505') {
-    return new Error(
-      'Trùng mã thanh toán. Chạy migration Supabase (20260702_sepay_user_transfer_code.sql) để bỏ ràng buộc unique trên payment_orders.reference_code.'
-    );
+    return new Error('Không thể tạo đơn mới lúc này. Mã thanh toán hiện tại vẫn có thể dùng để thanh toán.');
   }
   if (isMissingSepayReferenceColumn(error)) {
     return new Error('Thiếu cột sepay_reference_code trên profiles. Chạy migration Supabase.');
@@ -541,6 +569,7 @@ export async function updateSubscriptionSupabase(userId: string, plan: Subscript
     plan,
     is_premium: isPremium,
     source: plan === 'basic' ? 'basic' : 'manual',
+    valid_until: plan === 'basic' ? null : undefined,
     updated_at: now,
   });
   if (entError) throw toPaymentError(entError);
@@ -550,6 +579,73 @@ export async function updateSubscriptionSupabase(userId: string, plan: Subscript
     .update({ is_premium: isPremium })
     .eq('id', userId);
   if (profileError) throw toPaymentError(profileError);
+}
+
+export async function saveSafetyRhythmSupabase(
+  userId: string,
+  rhythm: Partial<SafetyRhythm> & { label: string; check_time: string }
+) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase chưa cấu hình');
+  const { error } = await supabase.from('safety_rhythms').upsert({
+    id: rhythm.id ?? newId(),
+    user_id: userId,
+    label: rhythm.label,
+    check_time: rhythm.check_time,
+    is_enabled: rhythm.is_enabled ?? true,
+  });
+  if (error) throw error;
+}
+
+export async function toggleSafetyRhythmSupabase(userId: string, rhythm: SafetyRhythm) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase chưa cấu hình');
+  const { error } = await supabase
+    .from('safety_rhythms')
+    .update({ is_enabled: !rhythm.is_enabled })
+    .eq('id', rhythm.id)
+    .eq('user_id', userId);
+  if (error) throw error;
+}
+
+export async function deleteSafetyRhythmSupabase(userId: string, rhythmId: string) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase chưa cấu hình');
+  const { error } = await supabase.from('safety_rhythms').delete().eq('id', rhythmId).eq('user_id', userId);
+  if (error) throw error;
+}
+
+export async function updateSafetySettingsSupabase(
+  userId: string,
+  current: EsmeryState['safetySettings'],
+  patch: Partial<EsmeryState['safetySettings']>
+) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase chưa cấu hình');
+  const { error } = await supabase.from('safety_settings').upsert({ ...current, ...patch, user_id: userId });
+  if (error) throw error;
+}
+
+/** True while a yearly entitlement has not reached its expiry time. */
+export async function hasActiveYearlySubscriptionSupabase(userId: string) {
+  const supabase = getSupabaseClient();
+  if (!supabase) return false;
+
+  const [{ data: subscription, error: subscriptionError }, { data: entitlement, error: entitlementError }] =
+    await Promise.all([
+      supabase.from('subscription_status').select('plan').eq('user_id', userId).maybeSingle(),
+      supabase.from('entitlements').select('is_premium, valid_until').eq('user_id', userId).maybeSingle(),
+    ]);
+
+  if (subscriptionError) throw toPaymentError(subscriptionError);
+  if (entitlementError) throw toPaymentError(entitlementError);
+
+  const validUntil = (entitlement as { valid_until?: string | null } | null)?.valid_until;
+  return (
+    (subscription as { plan?: SubscriptionPlan } | null)?.plan === 'yearly' &&
+    Boolean((entitlement as { is_premium?: boolean } | null)?.is_premium) &&
+    (!validUntil || new Date(validUntil).getTime() > Date.now())
+  );
 }
 
 /**
@@ -665,16 +761,20 @@ export async function createPaymentOrderSupabase(
     .single();
 
   if (error?.code === '23505') {
-    const { data: existingOrder } = await supabase
+    // Một số database cũ vẫn còn unique constraint trên reference_code.
+    // Tái sử dụng đơn gần nhất thay vì đẩy lỗi constraint ra giao diện.
+    const { data: existingOrders, error: existingOrderError } = await supabase
       .from('payment_orders')
       .select('*')
       .eq('user_id', userId)
       .eq('reference_code', reference)
       .order('updated_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .limit(1);
 
-    if (existingOrder && existingOrder.status !== 'paid') {
+    if (existingOrderError) throw toPaymentError(existingOrderError);
+    const existingOrder = existingOrders?.[0] as PaymentOrder | undefined;
+
+    if (existingOrder) {
       const { data: revived, error: reviveError } = await supabase
         .from('payment_orders')
         .update({
@@ -690,7 +790,7 @@ export async function createPaymentOrderSupabase(
       if (reviveError) throw toPaymentError(reviveError);
       return revived as PaymentOrder;
     }
-    throw toPaymentError(error);
+    throw new Error('Không thể tạo đơn thanh toán. Vui lòng thử lại sau.');
   }
 
   if (error) throw toPaymentError(error);

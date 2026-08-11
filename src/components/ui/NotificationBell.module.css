@@ -18,6 +18,7 @@
 
 .bellBtn:hover {
   background: rgba(255, 107, 157, 0.08);
+  transform: translateY(-2px) rotate(-4deg);
 }
 
 .bellBtn:active {

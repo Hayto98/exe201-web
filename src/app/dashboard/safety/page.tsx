@@ -11,6 +11,13 @@ import { useAuth, useEsmeryState } from '@/contexts/AppProviders';
 import { useLanguage } from '@/lib/i18n/useLanguage';
 import { tInline } from '@/lib/i18n/translations';
 import * as memory from '@/lib/repository/memoryRepository';
+import { isSupabaseConfigured } from '@/lib/supabase/client';
+import {
+  deleteSafetyRhythmSupabase,
+  saveSafetyRhythmSupabase,
+  toggleSafetyRhythmSupabase,
+  updateSafetySettingsSupabase,
+} from '@/lib/repository/supabaseRepository';
 import styles from './safety.module.css';
 
 export default function SafetyPage() {
@@ -24,7 +31,9 @@ export default function SafetyPage() {
   if (!state || !user) return null;
 
   const saveRhythm = async () => {
-    memory.saveRhythm(user.id, editId ? { id: editId, label, check_time: time } : { label, check_time: time });
+    const rhythm = editId ? { id: editId, label, check_time: time } : { label, check_time: time };
+    if (isSupabaseConfigured()) await saveSafetyRhythmSupabase(user.id, rhythm);
+    else memory.saveRhythm(user.id, rhythm);
     await refresh();
     setLabel('');
     setTime('08:00');
@@ -32,7 +41,8 @@ export default function SafetyPage() {
   };
 
   const saveSettings = async (patch: Partial<typeof state.safetySettings>) => {
-    memory.updateSafetySettings(user.id, patch);
+    if (isSupabaseConfigured()) await updateSafetySettingsSupabase(user.id, state.safetySettings, patch);
+    else memory.updateSafetySettings(user.id, patch);
     await refresh();
   };
 
@@ -81,13 +91,13 @@ export default function SafetyPage() {
               <strong>{r.label}</strong>
               <p style={{ margin: 0, color: 'var(--color-taupe)', fontSize: '0.875rem' }}>{r.check_time} · {r.is_enabled ? tInline(lang, 'enabled', 'đang bật') : tInline(lang, 'paused', 'tạm dừng')}</p>
             </div>
-            <button type="button" className={styles.iconBtn} onClick={async () => { memory.toggleRhythm(user.id, r.id); await refresh(); }}>
+            <button type="button" className={styles.iconBtn} onClick={async () => { if (isSupabaseConfigured()) await toggleSafetyRhythmSupabase(user.id, r); else memory.toggleRhythm(user.id, r.id); await refresh(); }}>
               <input type="checkbox" readOnly checked={r.is_enabled} />
             </button>
             <button type="button" className={styles.iconBtn} onClick={() => { setEditId(r.id); setLabel(r.label); setTime(r.check_time); }}>
               <Edit2 size={16} />
             </button>
-            <button type="button" className={styles.iconBtn} onClick={async () => { memory.deleteRhythm(user.id, r.id); await refresh(); }}>
+            <button type="button" className={styles.iconBtn} onClick={async () => { if (isSupabaseConfigured()) await deleteSafetyRhythmSupabase(user.id, r.id); else memory.deleteRhythm(user.id, r.id); await refresh(); }}>
               <Trash2 size={16} />
             </button>
           </div>

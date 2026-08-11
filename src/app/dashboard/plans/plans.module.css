@@ -10,6 +10,27 @@
   animation: spin 0.8s linear infinite;
 }
 
+.promoBanner { position: relative; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 18px; overflow: hidden; padding: 22px; border-radius: 26px; color: #513344; background: linear-gradient(125deg,#fff0b8 0%,#ffd0df 48%,#decfff 100%); box-shadow: 0 16px 38px rgba(205,92,133,.2); border: 2px solid rgba(255,255,255,.8); animation: promoIn .55s cubic-bezier(.2,.9,.2,1.1); }
+.promoBanner::after { content: ''; position: absolute; width: 170px; height: 170px; right: -65px; top: -90px; border-radius: 50%; background: rgba(255,255,255,.32); }
+.giftArt { position: relative; width: 82px; height: 82px; display: grid; place-items: center; animation: giftFloat 2.8s ease-in-out infinite; }
+.giftBox { width: 68px; height: 62px; display: grid; place-items: center; border-radius: 14px 14px 20px 20px; background: linear-gradient(145deg,#ff6598,#ff8db4); color: white; box-shadow: 0 10px 20px rgba(210,65,115,.25); }
+.giftLid { position: absolute; top: 3px; width: 76px; height: 18px; z-index: 2; border-radius: 10px; background: #ff4f89; transform: rotate(-4deg); }
+.promoContent { position: relative; z-index: 1; }
+.promoEyebrow { display: inline-block; padding: 4px 9px; border-radius: 999px; background: rgba(255,255,255,.65); color: #c63d72; font-size: .7rem; font-weight: 900; letter-spacing: .08em; }
+.promoContent h2 { margin: 7px 0 3px; font-size: clamp(1.15rem,3vw,1.55rem); line-height: 1.2; }
+.promoContent p { margin: 0; color: #795566; font-size: .9rem; }
+.promoCountdown { position: relative; z-index: 1; min-width: 82px; padding: 10px; border-radius: 18px; background: rgba(255,255,255,.7); text-align: center; box-shadow: inset 0 0 0 1px rgba(255,255,255,.8); }
+.promoCountdown strong { display: block; color: #d94278; font-size: 1.6rem; line-height: 1; }
+.promoCountdown span { display: block; margin-top: 4px; font-size: .7rem; font-weight: 800; color: #795566; }
+.promoPlan { position: relative; overflow: hidden; border: 2px solid #ff83ac !important; box-shadow: 0 14px 32px rgba(255,107,157,.2) !important; }
+.promoRibbon { display: inline-flex; margin: -8px 0 12px; padding: 5px 10px; border-radius: 999px; background: linear-gradient(135deg,#ff6b9d,#e44c83); color: white; font-size: .7rem; font-weight: 900; letter-spacing: .04em; box-shadow: 0 5px 12px rgba(228,76,131,.25); }
+.promoBenefit { margin: -4px 0 12px; color: #ce3d72; font-size: .78rem; font-weight: 800; }
+.promoSparkle { position: absolute; right: 16%; top: 12px; color: #fff; animation: sparkle 1.6s ease-in-out infinite; }
+@media (max-width: 600px) { .promoBanner { grid-template-columns: auto 1fr; padding: 18px; } .promoCountdown { grid-column: 1 / -1; display: flex; align-items: baseline; justify-content: center; gap: 6px; } .giftArt { width: 64px; transform: scale(.86); } }
+@keyframes promoIn { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes giftFloat { 0%,100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-7px) rotate(3deg); } }
+@keyframes sparkle { 0%,100% { transform: scale(.8) rotate(0); opacity: .55; } 50% { transform: scale(1.25) rotate(20deg); opacity: 1; } }
+
 @keyframes spin {
   to { transform: rotate(360deg); }
 }

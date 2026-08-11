@@ -37,7 +37,7 @@ export default function SignUpPage() {
       await signUp(name, email, password);
       router.push('/onboarding');
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Sign up failed';
+      const msg = err instanceof Error ? err.message : '';
       if (msg === 'CONFIRM_EMAIL') {
         setMessage({
           text: tInline(lang,
@@ -53,7 +53,7 @@ export default function SignUpPage() {
           variant: 'error',
         });
       } else {
-        setMessage({ text: msg, variant: 'error' });
+        setMessage({ text: msg && msg !== '{}' ? msg : tInline(lang, 'Could not create account. Please try again.', 'Không thể tạo tài khoản. Vui lòng thử lại.'), variant: 'error' });
       }
     }
     setLoading(false);

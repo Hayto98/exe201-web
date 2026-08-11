@@ -1,10 +1,13 @@
 .block {
   background: var(--gradient-card);
   border-radius: var(--radius-md);
-  padding: 18px;
+  padding: 20px;
   box-shadow: var(--shadow-card);
-  border: 1px solid rgba(255, 107, 157, 0.08);
+  border: 1px solid rgba(255, 255, 255, .9);
+  transition: transform .22s ease, box-shadow .22s ease;
 }
+
+.block:hover { transform: translateY(-2px); box-shadow: var(--shadow-elevated); }
 
 .bordered {
   border: 1.5px solid rgba(255, 107, 157, 0.2);

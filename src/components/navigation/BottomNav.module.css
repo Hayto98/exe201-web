@@ -7,11 +7,11 @@
   right: 0;
   min-height: var(--bottom-nav-height);
   padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-top: 1px solid rgba(255, 107, 157, 0.18);
-  box-shadow: 0 -8px 32px rgba(255, 107, 157, 0.1);
+  box-shadow: 0 -10px 35px rgba(117, 56, 83, 0.1);
   border-radius: 20px 20px 0 0;
   z-index: 100;
   overflow: hidden;
@@ -45,7 +45,7 @@
 }
 
 .tab:active {
-  transform: scale(0.94);
+  transform: scale(0.9);
 }
 
 .iconWrap {
@@ -82,6 +82,7 @@
 .active svg,
 .moreOpen svg {
   color: var(--color-primary);
+  animation: tabPop .3s cubic-bezier(.2,.9,.2,1.3);
 }
 
 .accentTab.active svg {
@@ -234,3 +235,5 @@
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+@keyframes tabPop { from { transform: scale(.72) rotate(-8deg); } to { transform: scale(1) rotate(0); } }

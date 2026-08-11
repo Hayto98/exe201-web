@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import logoImage from '../../../logo/esmery-horizontal-clean.jpg';
 import { usePathname } from 'next/navigation';
 import {
   Home,
@@ -11,7 +12,6 @@ import {
   AlertTriangle,
   CreditCard,
   User,
-  Heart,
 } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n/useLanguage';
 import { t } from '@/lib/i18n/translations';
@@ -35,8 +35,7 @@ export function Sidebar() {
   return (
     <aside className={styles.sidebar}>
       <div className={styles.brand}>
-        <Heart size={24} fill="var(--color-primary)" strokeWidth={0} />
-        <span>ESMERY</span>
+        <span className={styles.logoImage} style={{ backgroundImage: `url(${logoImage.src})` }} aria-label="ESMERY" />
       </div>
       <nav className={styles.nav}>
         {tabs.map(({ href, icon: Icon, key }) => {

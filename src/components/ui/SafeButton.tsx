@@ -8,6 +8,7 @@ interface SafeButtonProps {
   label: string;
   successLabel?: string;
   onClick: () => void | Promise<void>;
+  disabled?: boolean;
 }
 
 interface Ripple {
@@ -23,14 +24,14 @@ interface Particle {
   kind: 'heart' | 'dot';
 }
 
-export function SafeButton({ label, successLabel, onClick }: SafeButtonProps) {
+export function SafeButton({ label, successLabel, onClick, disabled = false }: SafeButtonProps) {
   const [phase, setPhase] = useState<'idle' | 'loading' | 'success'>('idle');
   const [ripples, setRipples] = useState<Ripple[]>([]);
   const [particles, setParticles] = useState<Particle[]>([]);
 
   const handleClick = useCallback(
     async (e: React.MouseEvent<HTMLButtonElement>) => {
-      if (phase !== 'idle') return;
+      if (phase !== 'idle' || disabled) return;
 
       const rect = e.currentTarget.getBoundingClientRect();
       const rippleId = Date.now();
@@ -60,7 +61,7 @@ export function SafeButton({ label, successLabel, onClick }: SafeButtonProps) {
         setParticles([]);
       }
     },
-    [onClick, phase]
+    [disabled, onClick, phase]
   );
 
   return (
@@ -77,7 +78,7 @@ export function SafeButton({ label, successLabel, onClick }: SafeButtonProps) {
         type="button"
         className={`${styles.safeButton} ${styles[phase]}`}
         onClick={handleClick}
-        disabled={phase !== 'idle'}
+        disabled={phase !== 'idle' || disabled}
         aria-busy={phase === 'loading'}
       >
         {ripples.map((r) => (

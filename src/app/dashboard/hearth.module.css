@@ -93,6 +93,15 @@
   margin: var(--space-xs) 0 var(--space-sm);
 }
 
+.scheduleHint {
+  max-width: 360px;
+  margin: 4px auto 0;
+  color: var(--color-taupe);
+  text-align: center;
+  font-size: .875rem;
+  line-height: 1.5;
+}
+
 .sectionTitle {
   font-weight: 800;
   margin: var(--space-md) 0 0;
@@ -103,6 +112,19 @@
 .toastWrap {
   animation: toastIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+
+.homePromo { position: relative; display: flex; align-items: center; gap: 14px; overflow: hidden; padding: 16px 18px; color: #573344; text-decoration: none; border-radius: 22px; background: linear-gradient(110deg, #ffeab0, #ffd2df 52%, #e4d5ff); border: 2px solid rgba(255,255,255,.88); box-shadow: 0 12px 28px rgba(205,92,133,.16); transition: transform .25s ease, box-shadow .25s ease; animation: promoSlide .5s ease both; }
+.homePromo:hover { transform: translateY(-3px); box-shadow: 0 17px 34px rgba(205,92,133,.24); }
+.homePromoGift { width: 58px; height: 58px; display: grid; place-items: center; flex-shrink: 0; border-radius: 18px; color: #fff; background: linear-gradient(145deg,#ff6298,#ff94b6); box-shadow: 0 8px 16px rgba(210,65,115,.22); animation: giftWiggle 2.5s ease-in-out infinite; }
+.homePromoCopy { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
+.homePromoCopy span { color: #c63d72; font-size: .66rem; font-weight: 900; letter-spacing: .07em; }
+.homePromoCopy strong { font-size: 1.02rem; line-height: 1.2; }
+.homePromoCopy small { color: #795566; font-size: .78rem; }
+.homePromoArrow { margin-left: auto; flex-shrink: 0; color: #d94278; }
+.homePromoGlow { position: absolute; top: 8px; right: 18%; color: #fff; animation: sparkle 1.6s ease-in-out infinite; }
+@keyframes promoSlide { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes giftWiggle { 0%,100% { transform: rotate(-3deg); } 50% { transform: rotate(4deg) translateY(-3px); } }
+@keyframes sparkle { 0%,100% { opacity: .5; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.2) rotate(15deg); } }
 
 @keyframes toastIn {
   from {

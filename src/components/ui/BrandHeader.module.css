@@ -3,27 +3,29 @@
   margin-bottom: var(--space-xxl);
 }
 
-.iconWrap {
-  width: 64px;
-  height: 64px;
+.logoImage {
+  width: 220px;
+  height: 77px;
   margin: 0 auto var(--space-lg);
-  background: var(--gradient-primary);
-  border-radius: var(--radius-full);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  box-shadow: var(--shadow-glow);
+  border-radius: 18px;
+  background-color: #fffdf7;
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+  box-shadow: 0 8px 18px rgba(80, 52, 64, .08);
+  animation: gentleBob 3.6s ease-in-out infinite;
 }
 
 .logo {
   font-family: var(--font-display);
   font-size: 1.75rem;
   font-weight: 700;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.18em;
   color: var(--color-primary-dark);
   margin: 0 0 var(--space-sm);
 }
+
+@keyframes gentleBob { 0%,100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-4px) rotate(1deg); } }
 
 .title {
   font-family: var(--font-display);

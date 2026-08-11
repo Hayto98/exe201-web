@@ -1,5 +1,9 @@
 export function mapAuthErrorMessage(message: string, lang: 'en' | 'vi' = 'vi'): string {
-  const lower = message.toLowerCase();
+  const cleaned = message.trim();
+  if (!cleaned || cleaned === '{}' || cleaned === '[object Object]') {
+    return lang === 'vi' ? 'Không thể tạo tài khoản lúc này. Vui lòng thử lại sau.' : 'Could not create the account right now. Please try again.';
+  }
+  const lower = cleaned.toLowerCase();
 
   if (lower.includes('failed to fetch') || lower.includes('networkerror')) {
     return lang === 'vi'
@@ -15,6 +19,15 @@ export function mapAuthErrorMessage(message: string, lang: 'en' | 'vi' = 'vi'): 
   if (lower.includes('rate limit')) {
     return lang === 'vi' ? 'Quá nhiều lần thử. Vui lòng đợi vài phút.' : 'Too many attempts. Please wait.';
   }
+  if (lower.includes('already registered') || lower.includes('already exists')) {
+    return lang === 'vi' ? 'Email này đã được đăng ký. Hãy đăng nhập hoặc đặt lại mật khẩu.' : 'This email is already registered. Please sign in or reset your password.';
+  }
+  if (lower.includes('signup is disabled')) {
+    return lang === 'vi' ? 'Hệ thống đang tạm tắt chức năng đăng ký.' : 'Sign-up is currently disabled.';
+  }
+  if (lower.includes('email address') && lower.includes('invalid')) {
+    return lang === 'vi' ? 'Địa chỉ email không hợp lệ.' : 'The email address is invalid.';
+  }
 
-  return message;
+  return cleaned;
 }

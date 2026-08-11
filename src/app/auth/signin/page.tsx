@@ -16,7 +16,7 @@ import { mapAuthErrorMessage } from '@/lib/auth/errors';
 
 export default function SignInPage() {
   const router = useRouter();
-  const { signIn, resetPassword } = useAuth();
+  const { signIn } = useAuth();
   const { lang } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -46,22 +46,6 @@ export default function SignInPage() {
     setLoading(false);
   };
 
-  const handleForgot = async () => {
-    if (!email) {
-      setMessage({ text: tInline(lang, 'Enter your email first.', 'Nhập email trước.'), variant: 'error' });
-      return;
-    }
-    try {
-      await resetPassword(email);
-      setMessage({
-        text: tInline(lang, 'Password reset email sent.', 'Đã gửi email đặt lại mật khẩu.'),
-        variant: 'success',
-      });
-    } catch (err: unknown) {
-      setMessage({ text: err instanceof Error ? err.message : 'Error', variant: 'error' });
-    }
-  };
-
   return (
     <div className="authScaffold">
       <div className="authCard">
@@ -80,9 +64,9 @@ export default function SignInPage() {
             label={tInline(lang, 'Password', 'Mật khẩu')}
             password
           />
-          <button type="button" className="textButton" style={{ alignSelf: 'flex-end' }} onClick={handleForgot}>
+          <Link href="/auth/forgot-password" className="textButton" style={{ alignSelf: 'flex-end' }}>
             {tInline(lang, 'Forgot password?', 'Quên mật khẩu?')}
-          </button>
+          </Link>
           {message && <InlineMessage text={message.text} variant={message.variant} />}
           <PrimaryButton text={tInline(lang, 'Sign In', 'Đăng nhập')} loading={loading} onClick={handleSignIn} />
           {isDemoMode() && (

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   Bell,
   BellRing,
@@ -12,6 +13,9 @@ import {
   MailCheck,
   TriangleAlert,
   Users as Group,
+  ArrowRight,
+  Gift,
+  Sparkles,
 } from 'lucide-react';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { InfoCard } from '@/components/ui/InfoCard';
@@ -26,8 +30,11 @@ import { tInline, friendlyTime } from '@/lib/i18n/translations';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
 import { checkInSupabase } from '@/lib/repository/supabaseRepository';
 import { markAllNotificationsRead } from '@/lib/repository/notifications';
+import { getCheckInAvailability } from '@/lib/safety/checkInSchedule';
+import { useMinuteTick } from '@/lib/hooks/useMinuteTick';
 import * as memory from '@/lib/repository/memoryRepository';
 import styles from './hearth.module.css';
+import { augustPromoDaysLeft, isAugustMonthlyPromoActive } from '@/lib/promotions/augustMonthly';
 
 export default function HearthPage() {
   const { signOut, user } = useAuth();
@@ -35,6 +42,7 @@ export default function HearthPage() {
   const { lang } = useLanguage();
   const router = useRouter();
   const [toast, setToast] = useState<string | null>(null);
+  useMinuteTick();
   const greetingPrefix = useTimeGreetingPrefix(lang);
   const displayName = state?.profile.display_name ?? user?.display_name ?? 'ESMERY';
 
@@ -46,9 +54,23 @@ export default function HearthPage() {
   const pendingDeliveries = state.notificationDeliveries.filter((d) => d.status === 'pending').length;
   const activeAlert = state.alertIncidents.find((i) => i.status === 'active' || i.status === 'escalated');
   const lastCheckInLabel = friendlyTime(state.profile.last_safe_at, lang);
+  const checkInAvailability = getCheckInAvailability(state.safetyRhythms, state.checkIns);
+  const nextOpenLabel = checkInAvailability.nextOpensAt?.toLocaleTimeString(lang === 'vi' ? 'vi-VN' : 'en-US', {
+    hour: '2-digit', minute: '2-digit', hour12: lang !== 'vi',
+  });
+  const promoActive = isAugustMonthlyPromoActive();
 
   const handleCheckIn = async () => {
     if (!user) return;
+    if (!checkInAvailability.canCheckIn) {
+      setToast(
+        checkInAvailability.completedCurrentWindow
+          ? tInline(lang, 'You already checked in for this time slot. Please wait for the next one.', 'Bạn đã check-in cho khung giờ này. Hãy đợi khung giờ tiếp theo.')
+          : tInline(lang, `Check-in opens at ${nextOpenLabel}.`, `Check-in sẽ mở lúc ${nextOpenLabel}.`)
+      );
+      setTimeout(() => setToast(null), 3500);
+      return;
+    }
     try {
       if (isSupabaseConfigured()) {
         await checkInSupabase(user.id);
@@ -59,7 +81,11 @@ export default function HearthPage() {
       setToast(tInline(lang, 'Your circle has been notified.', 'Vòng thân của bạn đã được thông báo.'));
     } catch (err) {
       console.error('[checkIn]', err);
-      setToast(tInline(lang, 'Check-in failed. Please try again.', 'Xác nhận thất bại. Vui lòng thử lại.'));
+      setToast(
+        err instanceof Error && err.message === 'CHECK_IN_NOT_AVAILABLE'
+          ? tInline(lang, 'This check-in slot is no longer available.', 'Khung giờ check-in này hiện không còn khả dụng.')
+          : tInline(lang, 'Check-in failed. Please try again.', 'Xác nhận thất bại. Vui lòng thử lại.')
+      );
     }
     setTimeout(() => setToast(null), 3500);
   };
@@ -109,12 +135,38 @@ export default function HearthPage() {
           <InlineMessage text={toast} variant="success" />
         </div>
       )}
+      {promoActive && (
+        <Link href="/dashboard/plans" className={styles.homePromo}>
+          <div className={styles.homePromoGlow} aria-hidden><Sparkles size={18} /></div>
+          <div className={styles.homePromoGift} aria-hidden><Gift size={38} /></div>
+          <div className={styles.homePromoCopy}>
+            <span>{tInline(lang, 'AUGUST SPECIAL · 01/08–30/08', 'ƯU ĐÃI THÁNG 8 · 01/08–30/08')}</span>
+            <strong>{tInline(lang, 'Buy 1 month, get 1 month free!', 'Mua 1 tháng, tặng ngay 1 tháng!')}</strong>
+            <small>{tInline(lang, `${augustPromoDaysLeft()} days left · Tap to claim`, `Còn ${augustPromoDaysLeft()} ngày · Chạm để nhận ưu đãi`)}</small>
+          </div>
+          <ArrowRight className={styles.homePromoArrow} size={22} />
+        </Link>
+      )}
       <div className={styles.safeSection}>
         <SafeButton
-          label={tInline(lang, "I'm Safe", 'Tôi an toàn')}
+          label={
+            checkInAvailability.completedCurrentWindow
+              ? tInline(lang, 'Checked in', 'Đã check-in')
+              : checkInAvailability.canCheckIn
+                ? tInline(lang, "I'm Safe", 'Tôi an toàn')
+                : tInline(lang, 'Waiting for next slot', 'Đợi khung giờ tiếp theo')
+          }
           successLabel={tInline(lang, 'All safe!', 'An toàn rồi!')}
           onClick={handleCheckIn}
+          disabled={!checkInAvailability.canCheckIn}
         />
+        {checkInAvailability.hasSchedule && !checkInAvailability.canCheckIn && (
+          <p className={styles.scheduleHint}>
+            {checkInAvailability.completedCurrentWindow
+              ? tInline(lang, `Next check-in opens at ${nextOpenLabel}.`, `Khung check-in kế tiếp mở lúc ${nextOpenLabel}.`)
+              : tInline(lang, `The next check-in opens at ${nextOpenLabel}, one hour before ${checkInAvailability.nextRhythm?.check_time}.`, `Khung check-in kế tiếp mở lúc ${nextOpenLabel}, trước 1 giờ so với ${checkInAvailability.nextRhythm?.check_time}.`)}
+          </p>
+        )}
       </div>
       <InfoCard
         icon={<BellRing size={24} />}

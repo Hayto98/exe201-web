@@ -1,22 +1,22 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;0,9..40,800;0,9..40,900&family=Playfair+Display:wght@600;700&display=swap');
 
 :root {
-  --color-primary: #ff6b9d;
-  --color-primary-light: #ffb3d1;
-  --color-primary-dark: #e84a7f;
-  --color-rose: #ff8fab;
-  --color-blush: #fff0f5;
-  --color-cream: #fff5f8;
-  --color-lavender: #f3e8ff;
-  --color-cocoa: #5c3d4e;
-  --color-sage: #b8e0c8;
-  --color-taupe: #9b7b8e;
-  --color-sky: #d4b8ff;
+  --color-primary: #ff6f9f;
+  --color-primary-light: #ffc5d9;
+  --color-primary-dark: #d94c7c;
+  --color-rose: #ff9dbd;
+  --color-blush: #fff4f8;
+  --color-cream: #fffafd;
+  --color-lavender: #eee8ff;
+  --color-cocoa: #493440;
+  --color-sage: #c9eed8;
+  --color-taupe: #8f7482;
+  --color-sky: #cae8ff;
   --color-surface: #ffffff;
 
-  --gradient-page: linear-gradient(135deg, #fff0f5 0%, #fff5f8 40%, #fce7f3 100%);
-  --gradient-primary: linear-gradient(135deg, #ff6b9d 0%, #ff8fab 50%, #ffb3d1 100%);
-  --gradient-card: linear-gradient(145deg, #ffffff 0%, #fff8fb 100%);
+  --gradient-page: radial-gradient(circle at 10% 8%, rgba(255, 209, 226, .9), transparent 26%), radial-gradient(circle at 94% 84%, rgba(202, 232, 255, .65), transparent 30%), #fff9fc;
+  --gradient-primary: linear-gradient(135deg, #ff719f 0%, #ff82ae 55%, #ffacc8 100%);
+  --gradient-card: linear-gradient(145deg, rgba(255,255,255,.98) 0%, rgba(255,249,252,.94) 100%);
 
   --space-xs: 4px;
   --space-sm: 8px;
@@ -25,13 +25,13 @@
   --space-xl: 24px;
   --space-xxl: 36px;
 
-  --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 26px;
   --radius-full: 9999px;
 
-  --shadow-card: 0 2px 12px rgba(255, 107, 157, 0.08);
-  --shadow-elevated: 0 8px 32px rgba(255, 107, 157, 0.15);
+  --shadow-card: 0 8px 24px rgba(99, 50, 75, 0.07);
+  --shadow-elevated: 0 18px 48px rgba(186, 89, 130, 0.16);
   --shadow-glow: 0 0 40px rgba(255, 107, 157, 0.25);
 
   --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -55,6 +55,7 @@ body {
   font-size: 1rem;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
 a { color: var(--color-primary-dark); text-decoration: none; }
@@ -76,10 +77,22 @@ button { font-family: inherit; }
   position: absolute;
   width: 400px;
   height: 400px;
-  background: radial-gradient(circle, rgba(255, 107, 157, 0.2) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255, 163, 195, .42) 0%, transparent 70%);
   top: -100px;
   right: -100px;
   pointer-events: none;
+}
+
+.authScaffold::after {
+  content: '';
+  position: absolute;
+  width: 260px;
+  height: 260px;
+  border-radius: 45% 55% 60% 40%;
+  background: rgba(202, 232, 255, .42);
+  bottom: -110px;
+  left: -80px;
+  animation: floatBlob 8s ease-in-out infinite alternate;
 }
 
 .authCard {
@@ -89,9 +102,10 @@ button { font-family: inherit; }
   border-radius: var(--radius-lg);
   padding: var(--space-xxl);
   box-shadow: var(--shadow-elevated);
-  border: 1px solid rgba(255, 107, 157, 0.12);
+  border: 1px solid rgba(255, 255, 255, .9);
   position: relative;
   z-index: 1;
+  animation: riseIn .55s cubic-bezier(.2,.8,.2,1) both;
 }
 
 .formStack { display: flex; flex-direction: column; gap: var(--space-md); }
@@ -107,6 +121,8 @@ button { font-family: inherit; }
 }
 
 .textButton:hover { opacity: 0.75; }
+.textButton { transition: color .2s ease, transform .2s ease; }
+.textButton:hover { transform: translateY(-1px); opacity: 1; color: var(--color-primary); }
 
 .onboardingPage {
   min-height: 100vh;
@@ -158,4 +174,11 @@ button { font-family: inherit; }
 @keyframes pulseGlow {
   0%, 100% { box-shadow: 0 0 0 0 rgba(255, 107, 157, 0.4); }
   50% { box-shadow: 0 0 0 20px rgba(255, 107, 157, 0); }
+}
+
+@keyframes riseIn { from { opacity: 0; transform: translateY(20px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes floatBlob { from { transform: translate(0, 0) rotate(0deg); } to { transform: translate(24px, -20px) rotate(12deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
 }

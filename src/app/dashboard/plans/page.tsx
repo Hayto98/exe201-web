@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { CheckCircle, CreditCard, Loader2 } from 'lucide-react';
+import { CheckCircle, CreditCard, Gift, Loader2, Sparkles } from 'lucide-react';
 import { ScreenLayout } from '@/components/ui/ScreenLayout';
 import { CardBlock } from '@/components/ui/CardBlock';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
@@ -13,6 +13,7 @@ import { choosePlan as applyPlan } from '@/lib/repository/plans';
 import { resolveSepayQrUrl, getSepayBankAccount, getSepayBankCode } from '@/lib/sepay';
 import type { SubscriptionPlan } from '@/lib/repository/types';
 import styles from './plans.module.css';
+import { augustPromoDaysLeft, isAugustMonthlyPromoActive } from '@/lib/promotions/augustMonthly';
 
 const plans: {
   id: SubscriptionPlan;
@@ -39,6 +40,13 @@ export default function PlansPage() {
   const pendingPlan = latestOrder?.plan ?? null;
   const currentPlan = state?.subscriptionStatus.plan ?? 'basic';
   const isPremium = state?.entitlement.is_premium ?? false;
+  const yearlyValidUntil = state?.entitlement.valid_until;
+  const hasActiveYearlyPlan =
+    currentPlan === 'yearly' &&
+    isPremium &&
+    (!yearlyValidUntil || new Date(yearlyValidUntil).getTime() > Date.now());
+  const augustPromoActive = isAugustMonthlyPromoActive();
+  const promoDaysLeft = augustPromoDaysLeft();
 
   // Poll payment status (giống mobile PlansViewModel)
   useEffect(() => {
@@ -68,8 +76,14 @@ export default function PlansPage() {
         });
       }
     } catch (err) {
+      const rawMessage = err instanceof Error ? err.message : '';
+      const friendlyMessage = rawMessage.includes('Gói Nâng cao năm')
+        ? rawMessage
+        : rawMessage.includes('payment') || rawMessage.includes('mã thanh toán')
+          ? tInline(lang, 'Your payment code is already available below. Please use it to complete the payment.', 'Mã thanh toán của bạn đã có ở bên dưới. Vui lòng dùng mã đó để thanh toán.')
+          : tInline(lang, 'Could not update plan. Please try again.', 'Không thể cập nhật gói. Vui lòng thử lại.');
       setMessage({
-        text: err instanceof Error ? err.message : tInline(lang, 'Could not update plan.', 'Không thể cập nhật gói.'),
+        text: friendlyMessage,
         variant: 'error',
       });
     }
@@ -85,19 +99,43 @@ export default function PlansPage() {
     >
       {message && <InlineMessage text={message.text} variant={message.variant} />}
 
+      {augustPromoActive && (
+        <section className={styles.promoBanner} aria-label={tInline(lang, 'August promotion', 'Khuyến mãi tháng 8')}>
+          <div className={styles.promoSparkle}><Sparkles size={18} /></div>
+          <div className={styles.giftArt} aria-hidden>
+            <span className={styles.giftLid} />
+            <span className={styles.giftBox}><Gift size={42} /></span>
+          </div>
+          <div className={styles.promoContent}>
+            <span className={styles.promoEyebrow}>{tInline(lang, 'ONLY AUGUST 1–30', 'CHỈ TỪ 01/08–30/08')}</span>
+            <h2>{tInline(lang, 'Buy 1 month, get 1 month free!', 'Mua 1 tháng, tặng ngay 1 tháng!')}</h2>
+            <p>{tInline(lang, 'Pay 49,000đ and enjoy Advanced care for 2 full months.', 'Chỉ 49.000đ để tận hưởng gói Nâng cao trong trọn 2 tháng.')}</p>
+          </div>
+          <div className={styles.promoCountdown}>
+            <strong>{promoDaysLeft}</strong>
+            <span>{tInline(lang, 'days left', 'ngày còn lại')}</span>
+          </div>
+        </section>
+      )}
+
       <div className={styles.grid}>
         {plans.map((p) => {
           const isActive = isPremium ? currentPlan === p.id : p.id === 'basic' && !pendingPlan;
           const isPending = pendingPlan === p.id;
           const isLoading = loadingPlan === p.id;
+          const isLockedByYearlyPlan = hasActiveYearlyPlan && p.id !== 'yearly';
 
           let buttonText = tInline(lang, 'Choose', 'Chọn');
           if (isActive && isPremium) buttonText = tInline(lang, 'Active', 'Đang dùng');
           else if (isActive && p.id === 'basic') buttonText = tInline(lang, 'Active', 'Đang dùng');
           else if (isPending) buttonText = tInline(lang, 'Awaiting payment', 'Chờ thanh toán');
+          else if (isLockedByYearlyPlan) buttonText = tInline(lang, 'Available after yearly plan expires', 'Khả dụng khi gói năm hết hạn');
 
           return (
-            <CardBlock key={p.id} border={isActive || isPending}>
+            <CardBlock key={p.id} border={isActive || isPending} className={augustPromoActive && p.id === 'monthly' ? styles.promoPlan : undefined}>
+              {augustPromoActive && p.id === 'monthly' && (
+                <span className={styles.promoRibbon}>{tInline(lang, '+1 MONTH FREE', 'TẶNG 1 THÁNG')}</span>
+              )}
               <div className={styles.planHeader}>
                 {isActive || isPending ? (
                   <CheckCircle size={24} color="var(--color-primary)" />
@@ -110,11 +148,14 @@ export default function PlansPage() {
                 </div>
               </div>
               <p className={styles.planBody}>{tInline(lang, p.bodyEn, p.bodyVi)}</p>
+              {augustPromoActive && p.id === 'monthly' && (
+                <p className={styles.promoBenefit}>{tInline(lang, '✓ 2 months of access for the price of 1', '✓ Dùng 2 tháng, chỉ trả tiền 1 tháng')}</p>
+              )}
               <PrimaryButton
                 text={isLoading ? tInline(lang, 'Processing...', 'Đang xử lý...') : buttonText}
                 variant={isActive || isPending ? 'outline' : 'primary'}
                 size="small"
-                disabled={isActive || isPending || isLoading || loadingPlan !== null}
+                disabled={isActive || isPending || isLockedByYearlyPlan || isLoading || loadingPlan !== null}
                 icon={isLoading ? <Loader2 size={16} className={styles.spin} /> : undefined}
                 onClick={() => handleChoosePlan(p.id)}
               />

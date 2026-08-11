@@ -2,8 +2,9 @@
   display: none;
   width: var(--sidebar-width);
   min-height: 100vh;
-  background: var(--gradient-card);
-  border-right: 1px solid rgba(255, 107, 157, 0.12);
+  background: rgba(255, 255, 255, .78);
+  backdrop-filter: blur(24px);
+  border-right: 1px solid rgba(255, 255, 255, .9);
   padding: var(--space-xl) var(--space-lg);
   position: fixed;
   left: 0;
@@ -22,13 +23,9 @@
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 1.25rem;
-  letter-spacing: 0.12em;
-  color: var(--color-primary-dark);
   margin-bottom: var(--space-xxl);
   padding: 0 var(--space-sm);
+  animation: brandIn .5s ease both;
 }
 
 .nav {
@@ -46,19 +43,24 @@
   color: var(--color-taupe);
   font-weight: 600;
   font-size: 0.925rem;
-  transition: all 0.2s;
+  transition: background .2s ease, color .2s ease, transform .2s ease;
 }
 
 .link:hover {
   background: rgba(255, 107, 157, 0.08);
   color: var(--color-primary-dark);
+  transform: translateX(4px);
 }
 
 .active {
-  background: rgba(255, 107, 157, 0.15);
+  background: linear-gradient(90deg, rgba(255, 107, 157, .16), rgba(255, 255, 255, .65));
   color: var(--color-primary-dark);
   font-weight: 800;
 }
+
+.logoImage { display: block; width: 190px; height: 67px; border-radius: 18px; background-repeat: no-repeat; background-size: contain; background-position: center; background-color: #fffdf7; box-shadow: 0 5px 14px rgba(80, 52, 64, .06); }
+
+@keyframes brandIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
 
 .active svg {
   color: var(--color-primary);

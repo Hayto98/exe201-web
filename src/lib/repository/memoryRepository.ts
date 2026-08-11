@@ -12,6 +12,7 @@ import type {
   SubscriptionPlan,
 } from './types';
 import { emptyUserState, PRESET_IMAGES, seedState } from './seed';
+import { getCheckInAvailability } from '@/lib/safety/checkInSchedule';
 
 const states = new Map<string, EsmeryState>();
 const demoUsers = new Map<string, { email: string; password: string; display_name: string }>();
@@ -90,6 +91,10 @@ function appendNotificationForUser(
 }
 
 export function checkIn(userId: string, note?: string) {
+  const current = getState(userId);
+  if (!getCheckInAvailability(current.safetyRhythms, current.checkIns).canCheckIn) {
+    throw new Error('CHECK_IN_NOT_AVAILABLE');
+  }
   const ts = now();
   mutate(userId, (s) => ({
     ...s,
@@ -418,6 +423,17 @@ export function updateSubscription(userId: string, plan: SubscriptionPlan) {
       updated_at: ts,
     },
   }));
+}
+
+/** Gói năm chỉ có thể đổi sau khi quyền lợi đã hết hạn. */
+export function hasActiveYearlySubscription(userId: string) {
+  const state = getState(userId);
+  const validUntil = state.entitlement.valid_until;
+  return (
+    state.subscriptionStatus.plan === 'yearly' &&
+    state.entitlement.is_premium &&
+    (!validUntil || new Date(validUntil).getTime() > Date.now())
+  );
 }
 
 export function updateProfile(userId: string, displayName: string, avatarUrl?: string | null) {

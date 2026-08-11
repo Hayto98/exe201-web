@@ -6,8 +6,8 @@
   background: var(--gradient-card);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-card);
-  border: 1px solid rgba(255, 107, 157, 0.08);
-  transition: transform 0.2s, box-shadow 0.2s;
+  border: 1px solid rgba(255, 255, 255, .9);
+  transition: transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s ease;
 }
 
 @media (min-width: 640px) {
@@ -18,7 +18,7 @@
 }
 
 .card:hover {
-  transform: translateY(-1px);
+  transform: translateY(-3px);
   box-shadow: var(--shadow-elevated);
 }
 
@@ -32,7 +32,10 @@
   justify-content: center;
   color: var(--color-primary);
   flex-shrink: 0;
+  transition: transform .25s ease;
 }
+
+.card:hover .iconWrapper { transform: rotate(-5deg) scale(1.08); }
 
 .content {
   flex: 1;

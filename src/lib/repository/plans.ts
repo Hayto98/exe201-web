@@ -4,6 +4,7 @@ import * as memory from './memoryRepository';
 import {
   createPaymentOrderSupabase,
   ensureUserSepayReferenceCode,
+  hasActiveYearlySubscriptionSupabase,
   updateSubscriptionSupabase,
 } from './supabaseRepository';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
@@ -11,6 +12,9 @@ import type { PaymentOrder, SubscriptionPlan } from './types';
 
 export async function choosePlan(userId: string, plan: SubscriptionPlan): Promise<PaymentOrder | null> {
   if (isSupabaseConfigured()) {
+    if (plan !== 'yearly' && await hasActiveYearlySubscriptionSupabase(userId)) {
+      throw new Error('Gói Nâng cao năm vẫn còn hiệu lực. Bạn chỉ có thể chuyển về gói Chăm sóc cơ bản khi gói năm hết hạn.');
+    }
     if (plan === 'basic') {
       await updateSubscriptionSupabase(userId, plan);
       return null;
@@ -18,6 +22,9 @@ export async function choosePlan(userId: string, plan: SubscriptionPlan): Promis
     return createPaymentOrderSupabase(userId, plan);
   }
 
+  if (plan !== 'yearly' && memory.hasActiveYearlySubscription(userId)) {
+    throw new Error('Gói Nâng cao năm vẫn còn hiệu lực. Bạn chỉ có thể chuyển về gói Chăm sóc cơ bản khi gói năm hết hạn.');
+  }
   if (plan === 'basic') {
     memory.updateSubscription(userId, plan);
     return null;

@@ -89,6 +89,13 @@
   cursor: default;
 }
 
+.safeButton.idle:disabled {
+  background: linear-gradient(135deg, #c9bfc5, #aaa0a8);
+  box-shadow: 0 0 0 8px rgba(143, 116, 130, .08);
+  animation: none;
+  opacity: .82;
+}
+
 .iconWrap {
   display: flex;
   align-items: center;

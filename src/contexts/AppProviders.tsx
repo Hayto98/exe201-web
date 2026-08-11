@@ -101,9 +101,10 @@ async function postAuthJson<T>(path: string, payload?: unknown): Promise<T> {
     throw new Error(mapAuthErrorMessage(message));
   }
 
-  const body = (await res.json().catch(() => ({}))) as { error?: string; user?: AuthUser };
+  const body = (await res.json().catch(() => ({}))) as { error?: unknown; user?: AuthUser };
   if (!res.ok) {
-    throw new Error(body.error ?? mapAuthErrorMessage('Request failed'));
+    const rawError = typeof body.error === 'string' ? body.error : '';
+    throw new Error(mapAuthErrorMessage(rawError || 'Request failed'));
   }
   return body as T;
 }
@@ -186,7 +187,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const resetPassword = async (email: string) => {
     const supabase = getSupabaseClient();
     if (isSupabaseConfigured() && supabase) {
-      const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase());
+      const redirectTo = typeof window !== 'undefined'
+        ? `${window.location.origin}/auth/reset-password`
+        : undefined;
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), { redirectTo });
       if (error) throw new Error(mapAuthErrorMessage(error.message));
       return;
     }

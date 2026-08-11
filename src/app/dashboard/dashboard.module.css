@@ -4,7 +4,10 @@
 
 .main {
   min-height: 100vh;
+  animation: contentIn .45s ease both;
 }
+
+@keyframes contentIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
 @media (min-width: 1024px) {
   .main {
