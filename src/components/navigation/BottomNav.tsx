@@ -8,6 +8,7 @@ import {
   Users,
   Clock,
   Flower2,
+  Timer,
   Shield,
   AlertTriangle,
   CreditCard,
@@ -32,6 +33,7 @@ const primaryTabs: PrimaryTab[] = [
 const moreTabs = [
   { href: '/dashboard/timeline', icon: Clock, key: 'timeline' as const },
   { href: '/dashboard/moments', icon: Flower2, key: 'moments' as const },
+  { href: '/dashboard/focus', icon: Timer, key: 'focus' as const },
   { href: '/dashboard/safety', icon: Shield, key: 'safety' as const },
   { href: '/dashboard/profile', icon: User, key: 'profile' as const },
 ] as const;

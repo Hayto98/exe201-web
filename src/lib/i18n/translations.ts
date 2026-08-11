@@ -13,6 +13,7 @@ export const translations = {
   circle: { en: 'Circle', vi: 'Vòng thân' },
   timeline: { en: 'Timeline', vi: 'Dòng thời gian' },
   moments: { en: 'Moments', vi: 'Khoảnh khắc' },
+  focus: { en: 'Focus', vi: 'Tập trung' },
   safety: { en: 'Safety', vi: 'An toàn' },
   crisis: { en: 'Crisis', vi: 'Khẩn cấp' },
   plans: { en: 'Plans', vi: 'Gói dịch vụ' },
