@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   AlertTriangle,
   Bell,
@@ -47,6 +48,11 @@ export function NotificationBell({ className }: NotificationBellProps) {
   const { state, refresh } = useEsmeryState();
   const { lang } = useLanguage();
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const notifications = state?.notifications ?? [];
   const unread = notifications.filter((n) => !n.is_read);
@@ -62,10 +68,8 @@ export function NotificationBell({ className }: NotificationBellProps) {
       if (e.key === 'Escape') setOpen(false);
     };
     document.addEventListener('keydown', onKey);
-    document.body.style.overflow = 'hidden';
     return () => {
       document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = '';
     };
   }, [open]);
 
@@ -122,81 +126,82 @@ export function NotificationBell({ className }: NotificationBellProps) {
         )}
       </button>
 
-      {open && (
-        <button
-          type="button"
-          className={styles.backdrop}
-          aria-label={tInline(lang, 'Close', 'Đóng')}
-          onClick={handleClose}
-        />
-      )}
-
-      <div
-        className={styles.sheet}
-        data-open={open}
-        role="dialog"
-        aria-modal="true"
-        aria-label={tInline(lang, 'Notifications', 'Thông báo')}
-        aria-hidden={!open}
-      >
-        <div className={styles.sheetHandle} />
-        <div className={styles.sheetHeader}>
-          <div>
-            <h2 className={styles.sheetTitle}>{tInline(lang, 'Notifications', 'Thông báo')}</h2>
-            {hasNew && (
-              <p className={styles.sheetSubtitle}>
-                {tInline(
-                  lang,
-                  `${unreadCount} unread`,
-                  `${unreadCount} chưa đọc`
-                )}
-              </p>
-            )}
-          </div>
+      {open && mounted && createPortal(
+        <>
           <button
             type="button"
-            className={styles.sheetClose}
-            onClick={handleClose}
+            className={styles.backdrop}
             aria-label={tInline(lang, 'Close', 'Đóng')}
+            onClick={handleClose}
+          />
+          <div
+            className={styles.sheet}
+            data-open={open}
+            role="dialog"
+            aria-modal="true"
+            aria-label={tInline(lang, 'Notifications', 'Thông báo')}
           >
-            <X size={18} />
-          </button>
-        </div>
-
-        <div className={styles.sheetBody}>
-          {notifications.length === 0 ? (
-            <p className={styles.empty}>
-              {tInline(lang, 'No notifications yet.', 'Chưa có thông báo.')}
-            </p>
-          ) : (
-            notifications.slice(0, 20).map((n) => (
+            <div className={styles.sheetHandle} />
+            <div className={styles.sheetHeader}>
+              <div>
+                <h2 className={styles.sheetTitle}>{tInline(lang, 'Notifications', 'Thông báo')}</h2>
+                {hasNew && (
+                  <p className={styles.sheetSubtitle}>
+                    {tInline(
+                      lang,
+                      `${unreadCount} unread`,
+                      `${unreadCount} chưa đọc`
+                    )}
+                  </p>
+                )}
+              </div>
               <button
-                key={n.id}
                 type="button"
-                className={`${styles.item} ${!n.is_read ? styles.itemUnread : ''}`}
-                onClick={() => handleItemClick(n)}
+                className={styles.sheetClose}
+                onClick={handleClose}
+                aria-label={tInline(lang, 'Close', 'Đóng')}
               >
-                <span className={styles.itemIcon}>{notificationIcon(n.type)}</span>
-                <span className={styles.itemContent}>
-                  <strong className={styles.itemTitle}>{localizedEventText(lang, n.title)}</strong>
-                  <span className={styles.itemBody}>{localizedEventText(lang, n.body)}</span>
-                  <span className={styles.itemTime}>{friendlyTime(n.created_at, lang)}</span>
-                </span>
-                {!n.is_read && <span className={styles.unreadDot} aria-hidden />}
+                <X size={18} />
               </button>
-            ))
-          )}
-        </div>
+            </div>
 
-        {hasNew && (
-          <div className={styles.sheetFooter}>
-            <button type="button" className={styles.markAllBtn} onClick={handleMarkAllRead}>
-              <MailCheck size={16} />
-              {tInline(lang, 'Mark all read', 'Đánh dấu đã đọc')}
-            </button>
+            <div className={styles.sheetBody}>
+              {notifications.length === 0 ? (
+                <p className={styles.empty}>
+                  {tInline(lang, 'No notifications yet.', 'Chưa có thông báo.')}
+                </p>
+              ) : (
+                notifications.slice(0, 20).map((n) => (
+                  <button
+                    key={n.id}
+                    type="button"
+                    className={`${styles.item} ${!n.is_read ? styles.itemUnread : ''}`}
+                    onClick={() => handleItemClick(n)}
+                  >
+                    <span className={styles.itemIcon}>{notificationIcon(n.type)}</span>
+                    <span className={styles.itemContent}>
+                      <strong className={styles.itemTitle}>{localizedEventText(lang, n.title)}</strong>
+                      <span className={styles.itemBody}>{localizedEventText(lang, n.body)}</span>
+                      <span className={styles.itemTime}>{friendlyTime(n.created_at, lang)}</span>
+                    </span>
+                    {!n.is_read && <span className={styles.unreadDot} aria-hidden />}
+                  </button>
+                ))
+              )}
+            </div>
+
+            {hasNew && (
+              <div className={styles.sheetFooter}>
+                <button type="button" className={styles.markAllBtn} onClick={handleMarkAllRead}>
+                  <MailCheck size={16} />
+                  {tInline(lang, 'Mark all read', 'Đánh dấu đã đọc')}
+                </button>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </>,
+        document.body
+      )}
     </>
   );
 }
