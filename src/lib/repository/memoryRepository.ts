@@ -210,12 +210,11 @@ export function sendNudge(userId: string, memberId: string) {
 export function shareMoment(userId: string, caption: string, imageUrl: string) {
   const ts = now();
   const sender = getState(userId);
+  const momentId = id();
+  const newMoment = { id: momentId, user_id: userId, caption, image_url: imageUrl, visibility: 'circle', created_at: ts };
   mutate(userId, (s) => ({
     ...s,
-    moments: [
-      { id: id(), user_id: userId, caption, image_url: imageUrl, visibility: 'circle', created_at: ts },
-      ...s.moments,
-    ],
+    moments: [newMoment, ...s.moments],
     timelineEvents: [
       {
         id: id(),
@@ -232,6 +231,10 @@ export function shareMoment(userId: string, caption: string, imageUrl: string) {
     if (member.status !== 'accepted' || !member.member_user_id || member.member_user_id === userId) {
       continue;
     }
+    mutate(member.member_user_id, (mState) => ({
+      ...mState,
+      moments: [newMoment, ...mState.moments.filter((x) => x.id !== momentId)],
+    }));
     appendNotificationForUser(member.member_user_id, {
       type: 'moment_shared',
       title: `${sender.profile.display_name} shared a moment`,

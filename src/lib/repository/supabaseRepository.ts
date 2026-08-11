@@ -172,6 +172,24 @@ export async function loadUserStateFromSupabase(
     ? { ...base.entitlement, user_id: userId, updated_at: new Date().toISOString() }
     : entitlement ?? base.entitlement;
 
+  const acceptedFriendUserIds = circleMembers
+    .filter((m) => m.status === 'accepted' && m.member_user_id && m.member_user_id !== userId)
+    .map((m) => m.member_user_id as string);
+
+  let combinedMoments = [...moments];
+  if (supabase && acceptedFriendUserIds.length > 0) {
+    const { data: friendMoments } = await supabase
+      .from('moments')
+      .select('*')
+      .in('user_id', acceptedFriendUserIds);
+    if (friendMoments && friendMoments.length > 0) {
+      const friendMomentsList = friendMoments as typeof base.moments;
+      combinedMoments = [...combinedMoments, ...friendMomentsList].filter(
+        (m, i, arr) => arr.findIndex((x) => x.id === m.id) === i
+      );
+    }
+  }
+
   return {
     ...base,
     profile: {
@@ -185,12 +203,11 @@ export async function loadUserStateFromSupabase(
     checkIns: checkIns.sort((a, b) => b.created_at.localeCompare(a.created_at)),
     timelineEvents: timelineEvents.sort((a, b) => b.created_at.localeCompare(a.created_at)),
     notifications: notifications.sort((a, b) => b.created_at.localeCompare(a.created_at)),
-    moments: moments.sort((a, b) => b.created_at.localeCompare(a.created_at)),
+    moments: combinedMoments.sort((a, b) => b.created_at.localeCompare(a.created_at)),
     emergencyContacts: emergencyContacts.sort((a, b) => a.name.localeCompare(b.name)),
     safetyRhythms: safetyRhythms.sort((a, b) => a.check_time.localeCompare(b.check_time)),
     safetySettings: safetySettings ?? base.safetySettings,
     subscriptionStatus: resolvedSubscriptionStatus,
-    notificationDeliveries: notificationDeliveries.sort((a, b) => b.created_at.localeCompare(a.created_at)),
     alertIncidents: alertIncidents.sort((a, b) => b.created_at.localeCompare(a.created_at)),
     alertJobs: alertJobs.sort((a, b) => b.run_at.localeCompare(a.run_at)),
     locationShares: locationShares.sort((a, b) => b.created_at.localeCompare(a.created_at)),

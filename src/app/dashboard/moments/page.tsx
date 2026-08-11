@@ -231,15 +231,31 @@ export default function MomentsPage() {
         </CardBlock>
       ) : (
         <div className={styles.grid}>
-          {state.moments.map((m) => (
-            <CardBlock key={m.id}>
-              <img src={m.image_url} alt={m.caption} className={styles.momentImg} />
-              <p className={styles.caption}>{m.caption}</p>
-              <span className={styles.time}>
-                {tInline(lang, 'Shared to circle', 'Chia sẻ với vòng thân')}
-              </span>
-            </CardBlock>
-          ))}
+          {state.moments.map((m) => {
+            const isOwn = m.user_id === user.id;
+            const author = isOwn
+              ? tInline(lang, 'You', 'Bạn')
+              : state.circleMembers.find((cm) => cm.member_user_id === m.user_id)?.name ||
+                tInline(lang, 'Friend in Circle', 'Bạn bè trong vòng thân');
+
+            return (
+              <CardBlock key={m.id}>
+                <div className={styles.authorRow}>
+                  <span className={styles.authorName}>{author}</span>
+                  <span className={styles.authorBadge}>
+                    {isOwn
+                      ? tInline(lang, 'Your moment', 'Khoảnh khắc của bạn')
+                      : tInline(lang, 'Friend moment', 'Khoảnh khắc bạn bè')}
+                  </span>
+                </div>
+                <img src={m.image_url} alt={m.caption} className={styles.momentImg} />
+                <p className={styles.caption}>{m.caption}</p>
+                <span className={styles.time}>
+                  {tInline(lang, 'Shared with Circle', 'Chia sẻ với Vòng thân')}
+                </span>
+              </CardBlock>
+            );
+          })}
         </div>
       )}
     </ScreenLayout>
